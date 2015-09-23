@@ -2,7 +2,7 @@ require 'sinatra/base'
 require "sinatra/cookies"
 require 'digest/sha2'
 require "redis"
-require "oj"
+require "json"
 
 module Isucon4
   class App < Sinatra::Base
@@ -57,7 +57,7 @@ module Isucon4
             return [nil, :locked]
           end
 
-          user = Oj.load(j)
+          user = JSON.parse(j)
           if calculate_password_hash(password, user['salt']) == user['hash']
             login_log(true, login)
             [user, nil]
@@ -106,8 +106,8 @@ module Isucon4
 
     get '/report' do
       content_type :json
-      Oj.dump(banned_ips: banned_ips,
-              locked_users: locked_users)
+      JSON.generate(banned_ips: banned_ips,
+                    locked_users: locked_users)
     end
   end
 end
