@@ -1,4 +1,19 @@
 ngx.print [[
+<!DOCTYPE html>
+<% title ||= 'isucon4' %>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
+    <link rel="stylesheet" href="/stylesheets/bootflat.min.css">
+    <link rel="stylesheet" href="/stylesheets/isucon-bank.css">
+    <title><%= title %></title>
+  </head>
+  <body>
+    <div class="container">
+      <h1 id="topbar">
+        <a href="/"><img src="/images/isucon-bank.png" alt="いすこん銀行 オンラインバンキングサービス"></a>
+      </h1>
 <div id="be-careful-phising" class="panel panel-danger">
   <div class="panel-heading">
     <span class="hikaru-mozi">偽画面にご注意ください！</span>
@@ -42,4 +57,7 @@ ngx.print [[
     </div>
   </form>
 </div>
+    </div>
+  </body>
+</html>
 ]]
