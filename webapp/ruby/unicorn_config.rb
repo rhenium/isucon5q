@@ -1,3 +1,7 @@
 worker_processes 10
 preload_app true
-listen "/tmp/unicorn.sock"
+if ENV["USER"] == "isucon"
+  listen "/tmp/unicorn.sock"
+else
+  listen "#{ENV["HOME"]}/unicorn.sock"
+end
