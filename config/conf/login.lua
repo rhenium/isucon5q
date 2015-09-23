@@ -56,7 +56,7 @@ if juser ~= ngx.null then
   sha256:update(password .. ":" .. user["salt"])
   ngx.log(ngx.ERR, str.to_hex(sha256:final()))
   ngx.log(ngx.ERR, user["hash"])
-  if str.to_hex(sha256:final()) == user["hash"] then
+  if tostring(str.to_hex(sha256:final())) == tostring(user["hash"]) then
     login_success(user)
     return ngx.redirect("/mypage")
   end
