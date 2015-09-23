@@ -25,19 +25,18 @@ module Isucon4
         Digest::SHA256.hexdigest "#{password}:#{salt}"
       end
 
-      def login_log(succeeded, user)
+      def login_log(succeeded, login)
         if succeeded
-          redis.zadd("locks", 0, user["login"])
+          redis.zadd("locks", 0, login)
           redis.zadd("bans", 0, request.ip)
         else
-          redis.zincrby("locks", 1, user["login"]) if user
+          redis.zincrby("locks", 1, login) if login
           redis.zincrby("bans", 1, request.ip)
         end
       end
 
-      def user_locked?(user)
-        return nil unless user
-        config[:user_lock_threshold] <= redis.zscore("locks", user["login"]).to_i
+      def user_locked?(login)
+        config[:user_lock_threshold] <= redis.zscore("locks", login).to_i
       end
 
       def ip_banned?
@@ -49,20 +48,20 @@ module Isucon4
         user = Oj.load(j) if j
 
         if ip_banned?
-          login_log(false, user) # user may be nil
+          login_log(false, user && login) # user may be nil
           return [nil, :banned]
         end
 
-        if user_locked?(user)
-          login_log(false, user)
+        if user && user_locked?(login)
+          login_log(false, login)
           return [nil, :locked]
         end
 
         if user && calculate_password_hash(password, user['salt']) == user['hash']
-          login_log(true, user)
+          login_log(true, login)
           [user, nil]
         elsif user
-          login_log(false, user)
+          login_log(false, login)
           [nil, :wrong_password]
         else
           login_log(false, nil)
@@ -89,7 +88,7 @@ module Isucon4
         lastca = redis.hget("lastca", user["id"])
         lastip = redis.hget("lastip", user["id"])
         session[:user_id] = user['id']
-        session[:login] = user["login"]
+        session[:login] = params[:login]
         session[:last_created_at] = lastca || Time.now.strftime("%Y-%m-%d %H:%M:%S")
         session[:last_ip] = lastip || request.ip
         redis.hset("lastca", user["id"], Time.now.strftime("%Y-%m-%d %H:%M:%S"))
