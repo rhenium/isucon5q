@@ -37,12 +37,12 @@ module Isucon4
         Digest::SHA256.hexdigest "#{password}:#{salt}"
       end
 
-      def login_log(succeeded, login, user_id = nil)
+      def login_log(succeeded, user)
         if succeeded
-          redis.zadd("locks", 0, login)
+          redis.zadd("locks", 0, user["login"])
           redis.zadd("bans", 0, request.ip)
         else
-          redis.zincrby("locks", 1, login) if user_id
+          redis.zincrby("locks", 1, user["login"]) if user
           redis.zincrby("bans", 1, request.ip)
         end
       end
@@ -60,23 +60,23 @@ module Isucon4
         user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
 
         if ip_banned?
-          login_log(false, login, user ? user['id'] : nil)
+          login_log(false, user) # user may be nil
           return [nil, :banned]
         end
 
         if user_locked?(user)
-          login_log(false, login, user['id'])
+          login_log(false, user)
           return [nil, :locked]
         end
 
         if user && calculate_password_hash(password, user['salt']) == user['password_hash']
-          login_log(true, login, user['id'])
+          login_log(true, user)
           [user, nil]
         elsif user
-          login_log(false, login, user['id'])
+          login_log(false, user)
           [nil, :wrong_password]
         else
-          login_log(false, login)
+          login_log(false, nil)
           [nil, :wrong_login]
         end
       end
@@ -93,12 +93,6 @@ module Isucon4
 
         @current_user
       end
-
-      #def last_login
-      #  return nil unless current_user
-
-      #  db.xquery('SELECT * FROM login_log WHERE succeeded = 1 AND user_id = ? ORDER BY id DESC LIMIT 2', current_user['id']).each.last
-      #end
 
       def banned_ips
         redis.zrangebyscore("bans", config[:ip_ban_threshold], "+inf")
