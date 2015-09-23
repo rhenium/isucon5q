@@ -1,4 +1,4 @@
-ngx.print([[
+ngx.print [[
 <div id="be-careful-phising" class="panel panel-danger">
   <div class="panel-heading">
     <span class="hikaru-mozi">偽画面にご注意ください！</span>
@@ -13,14 +13,14 @@ ngx.print([[
 <div class="page-header">
   <h1>ログイン</h1>
 </div>
-]])
+]]
 
 local notice = ngx.var.arg_notice
 if notice then
-    ngx.print '  <div id="notice-message" class="alert alert-danger" role="alert">'..notice..'</div>'
+    ngx.print('  <div id="notice-message" class="alert alert-danger" role="alert">' .. notice .. '</div>')
 end
 
-ngx.print([[
+ngx.print [[
 <div class="container">
   <form class="form-horizontal" role="form" action="/login" method="POST">
     <div class="form-group">
@@ -42,4 +42,4 @@ ngx.print([[
     </div>
   </form>
 </div>
-]])
+]]
