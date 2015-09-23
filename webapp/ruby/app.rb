@@ -1,13 +1,11 @@
 require 'sinatra/base'
 require 'digest/sha2'
-require 'rack-flash'
 require "redis"
 require "oj"
 
 module Isucon4
   class App < Sinatra::Base
     use Rack::Session::Cookie, secret: ENV['ISU4_SESSION_SECRET'] || 'shirokane'
-    use Rack::Flash
 
     helpers do
       def config
@@ -99,20 +97,18 @@ module Isucon4
       else
         case err
         when :locked
-          flash[:notice] = "This account is locked."
+          redirect "/?notice=This+account+is+locked."
         when :banned
-          flash[:notice] = "You're banned."
+          redirect "/?notice=You%27re+banned."
         else
-          flash[:notice] = "Wrong username or password"
+          redirect "/?notice=Wrong+username+or+password"
         end
-        redirect '/'
       end
     end
 
     get '/mypage' do
       unless session["user_id"]
-        flash[:notice] = "You must be logged in"
-        redirect '/'
+        redirect "/?notice=You+must+be+logged+in"
       end
       erb :mypage, layout: :base
     end
