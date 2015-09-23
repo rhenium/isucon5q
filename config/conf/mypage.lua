@@ -27,12 +27,12 @@ ngx.print [[
   <dt>前回ログイン</dt>
   <dd id="last-logined-at">
   ]]
-ngx.print ngx.var.cookie_last_created_at
+ngx.print(ngx.var.cookie_last_created_at)
 ngx.print [[
 </dd>
   <dt>最終ログインIPアドレス</dt>
   <dd id="last-logined-ip">]]
-ngx.print ngx.var.cookie_last_ip
+ngx.print(ngx.var.cookie_last_ip)
 ngx.print [[
 </dd>
 </dl>
@@ -40,7 +40,7 @@ ngx.print [[
 <div class="panel panel-default">
   <div class="panel-heading">
     お客様ご契約ID：]]
-ngx.print ngx.var.cookie_login
+ngx.print(ngx.var.cookie_login)
 ngx.print [[ 様の代表口座
   </div>
   <div class="panel-body">
