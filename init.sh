@@ -29,7 +29,7 @@ require "mysql2"
 require "redis"
 
 mysql = Mysql2::Client.new(host: "localhost", username: "isucon", password: "isucon", database: "isu4_qualifier")
-redis = Redis.new(db: `id -u #{ENV["USER"]}`.to_i)
+redis = Redis.new(db: `id -u #{ENV["USER"]}`.chomp[-1].to_i)
 redis.flushdb
 
 locks = Hash.new(0)
