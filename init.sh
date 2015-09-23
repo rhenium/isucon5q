@@ -37,11 +37,11 @@ end
   redis.flushdb
   
   locks.each do |id, val|
-    redis.zadd("locks", val, id)
+    redis.hset("locks", id, val)
   end
   
   bans.each do |ip, val|
-    redis.zadd("bans", val, ip)
+    redis.hset("bans", ip, val)
   end
   
   mysql.query("select * from users").each do |user|

@@ -17,13 +17,13 @@ redis:connect("127.0.0.1", 6379)
 
 function login_fail(l)
   if l then
-    redis:zincrby("locks", 1, login) end
-  redis:zincrby("bans", 1, ip)
+    redis:hincrby("locks", login, 1) end
+  redis:hincrby("bans", ip, 1)
 end
 
 function login_success(user)
-  redis:zadd("locks", 0, login)
-  redis:zadd("bans", 0, ip)
+  redis:hset("locks", login, 0)
+  redis:hset("bans", ip, 0)
   local uid = tostring(user["id"])
   local last_created_at = redis:hget("lastca", user["id"])
   if last_created_at == ngx.null then last_created_at = os.date("%Y-%m-%d %H:%M:%S") end
@@ -36,7 +36,7 @@ end
 
 local juser = redis:hget("users", login)
 
-local bans = redis:zscore("bans", ip)
+local bans = redis:hget("bans", ip)
 if bans ~= ngx.null and tonumber(bans) >= 10 then
   if juser ~= ngx.null then login_fail(login) else login_fail(nil) end
   redis:set_keepalive(10000, 100)
@@ -48,7 +48,7 @@ local str = require "resty.string"
 local sha256 = resty_sha256:new()
 local cjson = require "cjson"
 if juser ~= ngx.null then
-  local locks = redis:zscore("locks", login)
+  local locks = redis:hget("locks", login)
   if locks ~= ngx.null and tonumber(locks) >= 3 then
     login_fail(login)
     redis:set_keepalive(10000, 100)

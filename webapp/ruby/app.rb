@@ -72,11 +72,11 @@ module Isucon4
       end
 
       def banned_ips
-        redis.zrangebyscore("bans", config[:ip_ban_threshold], "+inf")
+        redis.hgetall("bans").select {|k, v| v.to_i >= config[:ip_ban_threshold] }.map {|k, v| k }
       end
 
       def locked_users
-        redis.zrangebyscore("locks", config[:user_lock_threshold], "+inf")
+        redis.hgetall("locks").select {|k, v| v.to_i >= config[:user_lock_threshold] }.map {|k, v| k }
       end
     end
 
