@@ -34,13 +34,13 @@ end
 local bans = redis:zscore("bans", ngx.var.remote_addr)
 local locks = redis:zscore("locks", login)
 
-print(bans)
+ngx.log(ngx.ERR, bans)
 if bans ~= ngx.null and bans >= 10 then
   login_fail()
   return ngx.redirect("/?notice=You%27re+banned.")
 end
 
-print(locks)
+ngx.log(ngx.ERR, locks)
 if locks ~= ngx.null and locks >= 3 then
   login_fail()
   return ngx.redirect("/?notice=This+account+is+locked.")
