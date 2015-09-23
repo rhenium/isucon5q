@@ -81,19 +81,6 @@ module Isucon4
         end
       end
 
-      def current_user
-        return @current_user if @current_user
-        return nil unless session[:user_id]
-
-        @current_user = db.xquery('SELECT * FROM users WHERE id = ?', session[:user_id].to_i).first
-        unless @current_user
-          session[:user_id] = nil
-          return nil
-        end
-
-        @current_user
-      end
-
       def banned_ips
         redis.zrangebyscore("bans", config[:ip_ban_threshold], "+inf")
       end
@@ -113,6 +100,7 @@ module Isucon4
         lastca = redis.hget("lastca", user["id"])
         lastip = redis.hget("lastip", user["id"])
         session[:user_id] = user['id']
+        session[:login] = user["login"]
         session[:last_created_at] = lastca || Time.now.strftime("%Y-%m-%d %H:%M:%S")
         session[:last_ip] = lastip || request.ip
         redis.hset("lastca", user["id"], Time.now.strftime("%Y-%m-%d %H:%M:%S"))
@@ -132,7 +120,7 @@ module Isucon4
     end
 
     get '/mypage' do
-      unless current_user
+      unless session[:user_id]
         flash[:notice] = "You must be logged in"
         redirect '/'
       end
