@@ -1,7 +1,6 @@
 local login
 local password
-local ip = ngx.req.get_headers().x_forwarded_for
-if not ip then ip = ngx.var.remote_addr end
+local ip = (ngx.req.get_headers().x_forwarded_for or ngx.req.get_headers().x_real_ip or ngx.var.remote_addr)
 
 local args = ngx.req.get_post_args()
 for key, val in pairs(args) do
@@ -41,20 +40,22 @@ if bans ~= ngx.null and tonumber(bans) >= 10 then
   return ngx.redirect("/?notice=You%27re+banned.")
 end
 
-local locks = redis:zscore("locks", login)
-if locks ~= ngx.null and tonumber(locks) >= 3 then
-  login_fail(login)
-  return ngx.redirect("/?notice=This+account+is+locked.")
-end
-
 local resty_sha256 = require "resty.sha256"
 local str = require "resty.string"
 local sha256 = resty_sha256:new()
 local cjson = require "cjson"
 local juser = redis:hget("users", login)
 if juser ~= ngx.null then
+  local locks = redis:zscore("locks", login)
+  if locks ~= ngx.null and tonumber(locks) >= 3 then
+    login_fail(login)
+    return ngx.redirect("/?notice=This+account+is+locked.")
+  end
+
   local user = cjson.decode(juser)
   sha256:update(password .. ":" .. user["salt"])
+  ngx.log(ngx.ERR, str.to_hex(sha256:final()))
+  ngx.log(ngx.ERR, user["hash"])
   if str.to_hex(sha256:final()) == user["hash"] then
     login_success(user)
     return ngx.redirect("/mypage")
