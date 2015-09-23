@@ -16,8 +16,9 @@ local resty_redis = require "resty.redis"
 local redis = resty_redis:new()
 redis:connect("127.0.0.1", 6379)
 
-function login_fail()
-  redis:zincrby("locks", 1, login)
+function login_fail(l)
+  if l then
+    redis:zincrby("locks", 1, login) end
   redis:zincrby("bans", 1, ip)
 end
 
@@ -36,13 +37,13 @@ end
 
 local bans = redis:zscore("bans", ip)
 if bans ~= ngx.null and tonumber(bans) >= 10 then
-  login_fail()
+  login_fail(nil)
   return ngx.redirect("/?notice=You%27re+banned.")
 end
 
 local locks = redis:zscore("locks", login)
 if locks ~= ngx.null and tonumber(locks) >= 3 then
-  login_fail()
+  login_fail(login)
   return ngx.redirect("/?notice=This+account+is+locked.")
 end
 
@@ -60,5 +61,5 @@ if juser ~= ngx.null then
   end
 end
 
-login_fail()
+login_fail(login)
 return ngx.redirect("/?notice=Wrong+username+or+password")
