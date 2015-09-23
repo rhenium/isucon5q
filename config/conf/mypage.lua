@@ -25,8 +25,7 @@ ngx.print [[
 
 <dl class="dl-horizontal">
   <dt>前回ログイン</dt>
-  <dd id="last-logined-at">
-  ]]
+  <dd id="last-logined-at">]]
 ngx.print(ngx.unescape_uri(ngx.var.cookie_last_created_at))
 ngx.print [[
 </dd>
