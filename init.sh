@@ -12,21 +12,10 @@ mysql -h ${myhost} -P ${myport} -u ${myuser} ${mydb} < sql/schema.sql
 mysql -h ${myhost} -P ${myport} -u ${myuser} ${mydb} < sql/dummy_users.sql
 mysql -h ${myhost} -P ${myport} -u ${myuser} ${mydb} < sql/dummy_log.sql
 
-#mysql -uisucon isucon <<'EOF'
-#create table locks (
-#id int(11) not null,
-#primary key (id)
-#);
-#
-#create table bans (
-#ip varchar(16) not null,
-#primary key (ip)
-#);
-#EOF
-
 ruby <<'EOF'
 require "mysql2"
 require "redis"
+require "oj"
 
 mysql = Mysql2::Client.new(host: "localhost", username: "isucon", password: "isucon", database: "isu4_qualifier")
 redis = Redis.new(db: `id -u #{ENV["USER"]}`.chomp[-1].to_i)
@@ -54,6 +43,12 @@ end
 
 bans.each do |ip, val|
   redis.zadd("bans", val, ip)
+end
+
+mysql.query("select * from users").each do |user|
+  redis.hset("users", user["login"], Oj.dump("id" => user["id"],
+                                             "hash" => user["password_hash"],
+                                             "salt" => user["salt"]))
 end
 
 EOF

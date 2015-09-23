@@ -11,6 +11,7 @@ GEM
     mysql2 (0.3.16)
     mysql2-cs-bind (0.0.6)
       mysql2
+    oj (2.12.14)
     rack (1.5.2)
     rack-flash3 (1.0.5)
       rack
@@ -35,6 +36,7 @@ PLATFORMS
 DEPENDENCIES
   foreman
   mysql2-cs-bind
+  oj
   rack-flash3
   redis
   sinatra

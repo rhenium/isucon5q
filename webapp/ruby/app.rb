@@ -1,9 +1,8 @@
 require 'sinatra/base'
 require 'digest/sha2'
-require 'mysql2-cs-bind'
 require 'rack-flash'
-require 'json'
 require "redis"
+require "oj"
 
 module Isucon4
   class App < Sinatra::Base
@@ -16,17 +15,6 @@ module Isucon4
           user_lock_threshold: (ENV['ISU4_USER_LOCK_THRESHOLD'] || 3).to_i,
           ip_ban_threshold: (ENV['ISU4_IP_BAN_THRESHOLD'] || 10).to_i,
         }
-      end
-
-      def db
-        Thread.current[:isu4_db] ||= Mysql2::Client.new(
-          host: ENV['ISU4_DB_HOST'] || 'localhost',
-          port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
-          username: ENV['ISU4_DB_USER'] || 'root',
-          password: ENV['ISU4_DB_PASSWORD'],
-          database: ENV['ISU4_DB_NAME'] || 'isu4_qualifier',
-          reconnect: true,
-        )
       end
 
       def redis
@@ -57,7 +45,8 @@ module Isucon4
       end
 
       def attempt_login(login, password)
-        user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+        j = redis.hget("users", login)
+        user = Oj.load(j) if j
 
         if ip_banned?
           login_log(false, user) # user may be nil
@@ -69,7 +58,7 @@ module Isucon4
           return [nil, :locked]
         end
 
-        if user && calculate_password_hash(password, user['salt']) == user['password_hash']
+        if user && calculate_password_hash(password, user['salt']) == user['hash']
           login_log(true, user)
           [user, nil]
         elsif user
@@ -129,10 +118,8 @@ module Isucon4
 
     get '/report' do
       content_type :json
-      {
-        banned_ips: banned_ips,
-        locked_users: locked_users,
-      }.to_json
+      Oj.dump(banned_ips: banned_ips,
+              locked_users: locked_users)
     end
   end
 end
