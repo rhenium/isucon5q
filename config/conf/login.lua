@@ -1,5 +1,8 @@
 local login
 local password
+local ip = ngx.req.get_headers().x_forwarded_for
+if not ip then ip = ngx.var.remote_addr end
+
 local args = ngx.req.get_post_args()
 for key, val in pairs(args) do
   if key == "login" then
@@ -15,33 +18,30 @@ redis:connect("127.0.0.1", 6379)
 
 function login_fail()
   redis:zincrby("locks", 1, login)
-  redis:zincrby("bans", 1, ngx.var.remote_addr)
+  redis:zincrby("bans", 1, ip)
 end
 
 function login_success(user)
   redis:zadd("locks", 0, login)
-  redis:zadd("bans", 0, ngx.var.remote_addr)
+  redis:zadd("bans", 0, ip)
   local uid = tostring(user["id"])
   local last_created_at = redis:hget("lastca", user["id"])
   if last_created_at == ngx.null then last_created_at = os.date("%Y-%m-%d %H:%M:%S") end
   local last_ip = redis:get("lastip", user["id"])
-  if last_ip == ngx.null then last_ip = ngx.var.remote_addr end
+  if last_ip == ngx.null then last_ip = ip end
   ngx.header["Set-Cookie"] = {"user_id="..uid, "login="..login, "last_created_at="..last_created_at, "last_ip="..last_ip }
   redis:hset("lastca", user["id"], last_created_at)
   redis:hset("lastip", user["id"], last_ip)
 end
 
-local bans = redis:zscore("bans", ngx.var.remote_addr)
-local locks = redis:zscore("locks", login)
-
-ngx.log(ngx.ERR, bans)
-if bans ~= ngx.null and bans >= 10 then
+local bans = redis:zscore("bans", ip)
+if bans ~= ngx.null and tonumber(bans) >= 10 then
   login_fail()
   return ngx.redirect("/?notice=You%27re+banned.")
 end
 
-ngx.log(ngx.ERR, locks)
-if locks ~= ngx.null and locks >= 3 then
+local locks = redis:zscore("locks", login)
+if locks ~= ngx.null and tonumber(locks) >= 3 then
   login_fail()
   return ngx.redirect("/?notice=This+account+is+locked.")
 end
