@@ -30,7 +30,7 @@ module Isucon4
       end
 
       def redis
-        Thread.current[:redis] ||= Redis.new
+        Thread.current[:redis] ||= Redis.new(db: `id -u`.to_i)
       end
 
       def calculate_password_hash(password, salt)
