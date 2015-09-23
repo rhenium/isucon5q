@@ -27,7 +27,7 @@ ngx.print [[
   <dt>前回ログイン</dt>
   <dd id="last-logined-at">
   ]]
-ngx.print(ngx.var.cookie_last_created_at)
+ngx.print(ngx.unescape_uri(ngx.var.cookie_last_created_at))
 ngx.print [[
 </dd>
   <dt>最終ログインIPアドレス</dt>
