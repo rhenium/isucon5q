@@ -54,11 +54,11 @@ module Isucon4
 
       def user_locked?(user)
         return nil unless user
-        config[:user_lock_threshold] <= redis.zscore("locks", user["id"])
+        config[:user_lock_threshold] <= redis.zscore("locks", user["id"]).to_i
       end
 
       def ip_banned?
-        config[:ip_ban_threshold] <= redis.zscore("bans", request.ip)
+        config[:ip_ban_threshold] <= redis.zscore("bans", request.ip).to_i
       end
 
       def attempt_login(login, password)
