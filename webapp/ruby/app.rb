@@ -45,24 +45,26 @@ module Isucon4
 
       def attempt_login(login, password)
         j = redis.hget("users", login)
-        user = Oj.load(j) if j
 
         if ip_banned?
-          login_log(false, user && login) # user may be nil
+          login_log(false, j && login) # user may be nil
           return [nil, :banned]
         end
 
-        if user && user_locked?(login)
-          login_log(false, login)
-          return [nil, :locked]
-        end
+        if j
+          if user_locked?(login)
+            login_log(false, login)
+            return [nil, :locked]
+          end
 
-        if user && calculate_password_hash(password, user['salt']) == user['hash']
-          login_log(true, login)
-          [user, nil]
-        elsif user
-          login_log(false, login)
-          [nil, :wrong_password]
+          user = Oj.load(j)
+          if calculate_password_hash(password, user['salt']) == user['hash']
+            login_log(true, login)
+            [user, nil]
+          else
+            login_log(false, login)
+            [nil, :wrong_password]
+          end
         else
           login_log(false, nil)
           [nil, :wrong_login]
