@@ -39,6 +39,7 @@ local juser = redis:hget("users", login)
 local bans = redis:zscore("bans", ip)
 if bans ~= ngx.null and tonumber(bans) >= 10 then
   if juser ~= ngx.null then login_fail(login) else login_fail(nil) end
+  red:set_keepalive(10000, 100)
   return ngx.redirect("/?notice=You%27re+banned.")
 end
 
@@ -50,6 +51,7 @@ if juser ~= ngx.null then
   local locks = redis:zscore("locks", login)
   if locks ~= ngx.null and tonumber(locks) >= 3 then
     login_fail(login)
+    red:set_keepalive(10000, 100)
     return ngx.redirect("/?notice=This+account+is+locked.")
   end
 
@@ -57,9 +59,11 @@ if juser ~= ngx.null then
   sha256:update(password .. ":" .. user["salt"])
   if str.to_hex(sha256:final()) == user["hash"] then
     login_success(user)
+    red:set_keepalive(10000, 100)
     return ngx.redirect("/mypage")
   end
 end
 
 login_fail(login)
+red:set_keepalive(10000, 100)
 return ngx.redirect("/?notice=Wrong+username+or+password")
