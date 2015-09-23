@@ -18,11 +18,6 @@ require "redis"
 require "oj"
 
 mysql = Mysql2::Client.new(host: "localhost", username: "isucon", password: "isucon", database: "isu4_qualifier")
-redis = Redis.new
-redis.flushdb
-redis = Redis.new(db: `id -u #{ENV["USER"]}`.chomp[-1].to_i)
-redis.flushdb
-
 locks = Hash.new(0)
 bans = Hash.new(0)
 
@@ -38,19 +33,22 @@ mysql.query("select * from login_log").each do |row|
   end
 end
 
-locks.each do |id, val|
-  redis.zadd("locks", val, id)
+[Redis.new, Redis.new(db: `id -u #{ENV["USER"]}`.chomp[-1].to_i)].each do |redis|
+  redis.flushdb
+  
+  locks.each do |id, val|
+    redis.zadd("locks", val, id)
+  end
+  
+  bans.each do |ip, val|
+    redis.zadd("bans", val, ip)
+  end
+  
+  mysql.query("select * from users").each do |user|
+    redis.hset("users", user["login"], Oj.dump("id" => user["id"],
+                                               "hash" => user["password_hash"],
+                                               "salt" => user["salt"]))
+  end
 end
-
-bans.each do |ip, val|
-  redis.zadd("bans", val, ip)
-end
-
-mysql.query("select * from users").each do |user|
-  redis.hset("users", user["login"], Oj.dump("id" => user["id"],
-                                             "hash" => user["password_hash"],
-                                             "salt" => user["salt"]))
-end
-
 EOF
 #echo "flush_all" | nc localhost 11211
