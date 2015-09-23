@@ -39,22 +39,17 @@ module Isucon4
 
       def login_log(succeeded, login, user_id = nil)
         if succeeded
-          redis.zadd("locks", 0, user_id)
+          redis.zadd("locks", 0, login)
           redis.zadd("bans", 0, request.ip)
         else
-          redis.zincrby("locks", 1, user_id) if user_id
+          redis.zincrby("locks", 1, login) if user_id
           redis.zincrby("bans", 1, request.ip)
         end
-        return
-        db.xquery("INSERT INTO login_log" \
-                  " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
-                  " VALUES (?,?,?,?,?)",
-                 Time.now, user_id, login, request.ip, succeeded ? 1 : 0)
       end
 
       def user_locked?(user)
         return nil unless user
-        config[:user_lock_threshold] <= redis.zscore("locks", user["id"]).to_i
+        config[:user_lock_threshold] <= redis.zscore("locks", user["login"]).to_i
       end
 
       def ip_banned?
