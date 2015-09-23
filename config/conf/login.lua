@@ -34,9 +34,11 @@ function login_success(user)
   redis:hset("lastip", user["id"], last_ip)
 end
 
+local juser = redis:hget("users", login)
+
 local bans = redis:zscore("bans", ip)
 if bans ~= ngx.null and tonumber(bans) >= 10 then
-  login_fail(nil)
+  if juser ~= ngx.null then login_fail(login) else login_fail(nil) end
   return ngx.redirect("/?notice=You%27re+banned.")
 end
 
@@ -44,7 +46,6 @@ local resty_sha256 = require "resty.sha256"
 local str = require "resty.string"
 local sha256 = resty_sha256:new()
 local cjson = require "cjson"
-local juser = redis:hget("users", login)
 if juser ~= ngx.null then
   local locks = redis:zscore("locks", login)
   if locks ~= ngx.null and tonumber(locks) >= 3 then
@@ -54,9 +55,7 @@ if juser ~= ngx.null then
 
   local user = cjson.decode(juser)
   sha256:update(password .. ":" .. user["salt"])
-  ngx.log(ngx.ERR, str.to_hex(sha256:final()))
-  ngx.log(ngx.ERR, user["hash"])
-  if tostring(str.to_hex(sha256:final())) == tostring(user["hash"]) then
+  if str.to_hex(sha256:final()) == user["hash"] then
     login_success(user)
     return ngx.redirect("/mypage")
   end
