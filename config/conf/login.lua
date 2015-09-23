@@ -27,7 +27,7 @@ function login_success(user)
   local uid = tostring(user["id"])
   local last_created_at = redis:hget("lastca", user["id"])
   if last_created_at == ngx.null then last_created_at = os.date("%Y-%m-%d %H:%M:%S") end
-  local last_ip = redis:get("lastip", user["id"])
+  local last_ip = redis:hget("lastip", user["id"])
   if last_ip == ngx.null then last_ip = ip end
   ngx.header["Set-Cookie"] = {"user_id="..uid, "login="..login, "last_created_at="..last_created_at, "last_ip="..last_ip }
   redis:hset("lastca", user["id"], last_created_at)
