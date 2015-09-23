@@ -1,13 +1,12 @@
 ngx.print [[
 <!DOCTYPE html>
-<% title ||= 'isucon4' %>
 <html>
   <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
     <link rel="stylesheet" href="/stylesheets/bootflat.min.css">
     <link rel="stylesheet" href="/stylesheets/isucon-bank.css">
-    <title><%= title %></title>
+    <title>isucon4</title>
   </head>
   <body>
     <div class="container">
@@ -32,7 +31,7 @@ ngx.print [[
 
 local notice = ngx.var.arg_notice
 if notice then
-    ngx.print('  <div id="notice-message" class="alert alert-danger" role="alert">' .. notice .. '</div>')
+    ngx.print('  <div id="notice-message" class="alert alert-danger" role="alert">' .. ngx.unescape_uri(notice) .. '</div>')
 end
 
 ngx.print [[
