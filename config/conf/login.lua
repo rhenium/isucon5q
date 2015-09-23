@@ -10,7 +10,7 @@ for key, val in pairs(args) do
 end
 
 local resty_redis = require "resty.redis"
-local redis = redis:new()
+local redis = resty_redis:new()
 redis:connect("127.0.0.1", 6379)
 
 function login_fail()
