@@ -120,7 +120,7 @@ module Isucon4
     end
 
     get '/mypage' do
-      unless session[:user_id]
+      unless session["user_id"]
         flash[:notice] = "You must be logged in"
         redirect '/'
       end
