@@ -30,6 +30,7 @@ require "redis"
 
 mysql = Mysql2::Client.new(host: "localhost", username: "isucon", password: "isucon", database: "isu4_qualifier")
 redis = Redis.new(db: `id -u #{ENV["USER"]}`.chomp[-1].to_i)
+puts "Clearing redis db: #{`id -u #{ENV["USER"]}`.chomp[-1].to_i}"
 redis.flushdb
 
 locks = Hash.new(0)
@@ -38,11 +39,11 @@ bans = Hash.new(0)
 mysql.query("select * from login_log").each do |row|
   if row["succeeded"] == 0
     bans[row["ip"]] += 1
-    if row["user_id"]
-      locks[row["user_id"]] += 1
+    if row["user_id"].to_i > 0
+      locks[row["login"]] += 1
     end
   else
-    locks[row["user_id"]] = 0
+    locks[row["login"]] = 0
     bans[row["ip"]] = 0
   end
 end
