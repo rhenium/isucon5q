@@ -1,4 +1,5 @@
 require 'sinatra/base'
+require "sinatra/cookies"
 require 'digest/sha2'
 require "redis"
 require "oj"
@@ -6,6 +7,7 @@ require "oj"
 module Isucon4
   class App < Sinatra::Base
     use Rack::Session::Cookie, secret: ENV['ISU4_SESSION_SECRET'] || 'shirokane'
+    helpers Sinatra::Cookies
 
     helpers do
       def config
@@ -78,19 +80,15 @@ module Isucon4
       end
     end
 
-    get '/' do
-      erb :index, layout: :base
-    end
-
     post '/login' do
       user, err = attempt_login(params[:login], params[:password])
       if user
         lastca = redis.hget("lastca", user["id"])
         lastip = redis.hget("lastip", user["id"])
-        session[:user_id] = user['id']
-        session[:login] = params[:login]
-        session[:last_created_at] = lastca || Time.now.strftime("%Y-%m-%d %H:%M:%S")
-        session[:last_ip] = lastip || request.ip
+        cookies[:user_id] = user['id']
+        cookies[:login] = params[:login]
+        cookies[:last_created_at] = lastca || Time.now.strftime("%Y-%m-%d %H:%M:%S")
+        cookies[:last_ip] = lastip || request.ip
         redis.hset("lastca", user["id"], Time.now.strftime("%Y-%m-%d %H:%M:%S"))
         redis.hset("lastip", user["id"], request.ip)
         redirect '/mypage'
@@ -104,13 +102,6 @@ module Isucon4
           redirect "/?notice=Wrong+username+or+password"
         end
       end
-    end
-
-    get '/mypage' do
-      unless session["user_id"]
-        redirect "/?notice=You+must+be+logged+in"
-      end
-      erb :mypage, layout: :base
     end
 
     get '/report' do
