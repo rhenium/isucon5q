@@ -30,7 +30,7 @@ require "redis"
 
 mysql = Mysql2::Client.new(host: "localhost", username: "isucon", password: "isucon", database: "isu4_qualifier")
 redis = Redis.new
-redis.flush_db
+redis.flushall
 
 locks = Hash.new(0)
 bans = Hash.new(0)
