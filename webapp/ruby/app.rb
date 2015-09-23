@@ -6,8 +6,8 @@ require "oj"
 
 module Isucon4
   class App < Sinatra::Base
-    use Rack::Session::Cookie, secret: ENV['ISU4_SESSION_SECRET'] || 'shirokane'
     helpers Sinatra::Cookies
+    set :cookie_options, domain: nil
 
     helpers do
       def config
