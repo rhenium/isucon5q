@@ -44,8 +44,7 @@
     <% comments_for_me.each do |comment| %>
     <div class="comments-comment">
       <ul class="list-group">
-        <% comment_user = get_user(comment[:user_id]) %>
-        <li class="list-group-item comment-owner"><a href="/profile/<%= comment_user[:account_name] %>"><%= comment_user[:nick_name] %>さん</a>:
+        <li class="list-group-item comment-owner"><a href="/profile/<%= comment[:account_name] %>"><%= comment[:nick_name] %>さん</a>:
         <li class="list-group-item comment-comment"><%= comment[:comment].size > 30 ? comment[:comment][0...27] + '...' : comment[:comment] %>
         <li class="list-group-item comment-created-at">投稿時刻:<%= comment[:created_at] %>
       </ul>

@@ -183,8 +183,9 @@ SQL
       entry }
 
     comments_for_me_query = <<SQL
-SELECT c.id AS id, c.entry_id AS entry_id, c.user_id AS user_id, c.comment AS comment, c.created_at AS created_at
+SELECT c.id AS id, c.entry_id AS entry_id, c.user_id AS user_id, c.comment AS comment, c.created_at AS created_at, u.account_name AS account_name, u.nick_name AS nick_name
 FROM comments c
+JOIN users u ON u.id = c.user_id
 JOIN entries e ON c.entry_id = e.id
 WHERE e.user_id = ?
 ORDER BY c.created_at DESC
