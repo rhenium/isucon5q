@@ -368,8 +368,7 @@ SQL
         raise Isucon5::ContentNotFound
       end
       s, l = [session[:user_id], user[:id]].sort
-      redis.sadd("r#{s}", l)
-      #db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
+      db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
       redirect '/friends'
     end
   end
