@@ -101,18 +101,13 @@ SQL
 
     def user_from_account(account_name)
       j = redis.hget("users", account_name)
-      #user = db.xquery('SELECT * FROM users WHERE account_name = ?', account_name).first
       raise Isucon5::ContentNotFound unless j
       Oj.load(j).map {|k, v| [k.to_sym, v] }.to_h
     end
 
     def is_friend?(another_id)
       s, l = [another_id, session[:user_id]]
-      return redis.sismember("r#{s}", l)
-      user_id = session[:user_id]
-      query = 'SELECT COUNT(1) AS cnt FROM relations WHERE (one = ? AND another = ?) OR (one = ? AND another = ?)'
-      cnt = db.xquery(query, user_id, another_id, another_id, user_id).first[:cnt]
-      cnt.to_i > 0 ? true : false
+      redis.sismember("r#{s}", l)
     end
 
     def get_friends_map(id)
@@ -123,10 +118,6 @@ SQL
 
     def get_friends_ids(id)
       redis.smembers("r#{id}")
-    end
-
-    def is_friend_account?(account_name)
-      is_friend?(user_from_account(account_name)[:id])
     end
 
     def permitted?(another_id)
@@ -352,24 +343,14 @@ SQL
 
   get '/friends' do
     authenticated!
-    #query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
-    #friends = {}
-    #db.xquery(query, session[:user_id], session[:user_id]).each do |rel|
-    #  key = (rel[:one] == session[:user_id] ? :another : :one)
-    #  friends[rel[key]] ||= rel[:created_at]
-    #end
-    #list = friends.map{|user_id, created_at| [user_id, created_at]}
     list = get_friends_map(session[:user_id])
     erb :friends, locals: { friends: list }
   end
 
   post '/friends/:account_name' do
     authenticated!
-    unless is_friend_account?(params['account_name'])
-      user = user_from_account(params['account_name'])
-      unless user
-        raise Isucon5::ContentNotFound
-      end
+    user = user_from_account(params['account_name'])
+    unless is_friend?(user[:id])
       s, l = [session[:user_id], user[:id]].sort
       db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
       redis.sadd("r#{session[:user_id]}", user[:id])
