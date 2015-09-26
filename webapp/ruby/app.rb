@@ -3,6 +3,7 @@ require 'mysql2'
 require 'mysql2-cs-bind'
 require 'tilt/erubis'
 require 'erubis'
+require "oj"
 
 module Isucon5
   class AuthenticationError < StandardError; end
@@ -54,16 +55,31 @@ class Isucon5::WebApp < Sinatra::Base
 
     def authenticate(email, password)
       query = <<SQL
-SELECT u.id AS id, u.account_name AS account_name, u.nick_name AS nick_name, u.email AS email
+SELECT u.id AS user_id, u.account_name AS account_name, u.nick_name AS nick_name, u.email AS email
 FROM users u
 JOIN salts s ON u.id = s.user_id
 WHERE u.email = ? AND u.passhash = SHA2(CONCAT(?, s.salt), 512)
 SQL
       result = db.xquery(query, email, password).first
       raise Isucon5::AuthenticationError unless result
-      session[:user_id] = result[:id]
-      session[:account_name] = result[:account_name]
+      result.each do |k, v|
+        session[k] = v
+      end
       result
+    end
+
+    def myprofile
+      if session[:profile]
+        Oj.load(session[:profile])
+      else
+        profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', session[:user_id]).first
+        if profile
+          session[:profile] = Oj.dump(profile)
+          profile
+        else
+          nil
+        end
+      end
     end
 
     # def current_user
@@ -163,8 +179,6 @@ SQL
   get '/' do
     authenticated!
 
-    profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', session[:user_id]).first
-
     entries_query = 'SELECT * FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
     entries = db.xquery(entries_query, session[:user_id])
       .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry[:title], entry[:content] = entry[:body].split(/\n/, 2); entry }
@@ -216,7 +230,7 @@ SQL
     footprints = db.xquery(query, session[:user_id])
 
     locals = {
-      profile: profile || {},
+      profile: myprofile || {},
       entries: entries,
       comments_for_me: comments_for_me,
       entries_of_friends: entries_of_friends,
@@ -230,8 +244,7 @@ SQL
   get '/profile/:account_name' do
     authenticated!
     owner = user_from_account(params['account_name'])
-    prof = db.xquery('SELECT * FROM profiles WHERE user_id = ?', owner[:id]).first
-    prof = {} unless prof
+    prof = myprofile
     query = if permitted?(owner[:id])
               'SELECT * FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
             else
@@ -250,7 +263,7 @@ SQL
     end
     args = [params['first_name'], params['last_name'], params['sex'], params['birthday'], params['pref']]
 
-    prof = db.xquery('SELECT * FROM profiles WHERE user_id = ?', session[:user_id]).first
+    prof = myprofile
     if prof
       query = <<SQL
 UPDATE profiles
@@ -265,6 +278,7 @@ SQL
       args.unshift(session[:user_id])
     end
     db.xquery(query, *args)
+    session[:profile] = nil
     redirect "/profile/#{params['account_name']}"
   end
 

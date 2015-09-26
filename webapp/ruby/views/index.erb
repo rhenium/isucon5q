@@ -1,11 +1,11 @@
 <h2>ISUxi index</h2>
 <div class="row panel panel-primary" id="prof">
-  <div class="col-md-12 panel-title" id="prof-nickname"><%= @user[:nick_name] %></div>
-  <div class="col-md-12"><a href="/profile/<%= @user[:account_name] %>">プロフィール</a></div>
+  <div class="col-md-12 panel-title" id="prof-nickname"><%= session[:nick_name] %></div>
+  <div class="col-md-12"><a href="/profile/<%= session[:account_name] %>">プロフィール</a></div>
   <div class="col-md-4">
     <dl>
-      <dt>アカウント名</dt><dd id="prof-account-name"><%= @user[:account_name] %></dd>
-      <dt>メールアドレス</dt><dd id="prof-email"><%= @user[:email] %></dd>
+      <dt>アカウント名</dt><dd id="prof-account-name"><%= session[:account_name] %></dd>
+      <dt>メールアドレス</dt><dd id="prof-email"><%= session[:email] %></dd>
       <dt>姓</dt><dd id="prof-last-name"><%= profile[:last_name] || '未入力' %></dd>
       <dt>名</dt><dd id="prof-first-name"><%= profile[:first_name] || '未入力' %></dd>
       <dt>性別</dt><dd id="prof-sex"><%= profile[:sex] || '未入力' %></dd>
@@ -15,7 +15,7 @@
     </dl>
   </div>
   <div class="col-md-4">
-    <div id="entries-title"><a href="/diary/entries/<%= @user[:account_name] %>">あなたの日記エントリ</a></div>
+    <div id="entries-title"><a href="/diary/entries/<%= session[:account_name] %>">あなたの日記エントリ</a></div>
     <div id="entries">
       <ul class="list-group">
         <% entries.each do |entry| %>
