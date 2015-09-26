@@ -75,7 +75,7 @@ SQL
     end
 
     def myprofile
-      if cookies[:profile]
+      if cookies[:profile].to_s.size > 0
         Oj.load(cookies[:profile])
       else
         profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', cookies[:user_id].to_i).first
