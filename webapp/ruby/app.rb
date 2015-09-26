@@ -293,15 +293,15 @@ SQL
 
   get '/diary/entry/:entry_id' do
     authenticated!
-    entry = db.xquery('SELECT entries.*,users.nick_name AS nick_name FROM entries" +
-                      "join users on entries.user_id = users.id WHERE entries.id = ?', params['entry_id']).first
+    entry = db.xquery('SELECT entries.*,users.nick_name AS nick_name FROM entries " +
+                      "JOIN users ON entries.user_id = users.id WHERE entries.id = ?', params['entry_id']).first
     raise Isucon5::ContentNotFound unless entry
     entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
     entry[:is_private] = (entry[:private] == 1)
     if entry[:is_private] && !permitted?(entry[:user_id])
       raise Isucon5::PermissionDenied
     end
-    comments = db.xquery('SELECT comments.*,users.nick_name,users.account_name FROM comments' +
+    comments = db.xquery('SELECT comments.*,users.nick_name,users.account_name FROM comments ' +
                          'JOIN users ON users.id = comments.user_id WHERE entry_id = ?', entry[:id])
     mark_footprint(entry[:user_id])
     erb :entry, locals: { owner: { nick_name: entry[:nick_name] },
