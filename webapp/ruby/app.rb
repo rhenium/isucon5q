@@ -215,7 +215,7 @@ SQL
     friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
 
     query = <<SQL
-SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
+SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at),users.* AS updated
 FROM footprints
 JOIN users ON owner_id = users.id
 WHERE user_id = ?
