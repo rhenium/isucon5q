@@ -2,7 +2,7 @@ worker_processes 4
 preload_app true
 if ENV["USER"] == "isucon"
   pid "/home/isucon/webapp/ruby/unicorn.pid"
-  listen "/tmp/unicorn.sock"
+  listen "/sock/unicorn.sock"
 else
-  listen "/tmp/#{ENV["HOME"]}.sock"
+  listen "/sock/#{ENV["HOME"]}.sock"
 end
