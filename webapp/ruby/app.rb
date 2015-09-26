@@ -207,16 +207,7 @@ SQL
 
     friends = get_friends_map(session[:user_id])
 
-    query = <<SQL
-SELECT users.*, user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
-FROM footprints
-JOIN users ON owner_id = users.id
-WHERE user_id = ?
-GROUP BY user_id, owner_id, DATE(created_at)
-ORDER BY updated DESC
-LIMIT 10
-SQL
-    footprints = db.xquery(query, session[:user_id])
+    footprints = get_footprints(10)
 
     locals = {
       profile: myprofile || {},
@@ -326,8 +317,7 @@ SQL
     redirect "/diary/entry/#{entry[:id]}"
   end
 
-  get '/footprints' do
-    authenticated!
+  def get_footprints(c)
     query = <<SQL
 SELECT users.*,user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
 FROM footprints
@@ -335,9 +325,13 @@ JOIN users ON owner_id = users.id
 WHERE user_id = ?
 GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
-LIMIT 50
 SQL
-    footprints = db.xquery(query, session[:user_id])
+    db.xquery(query << " LIMIT #{c}", session[:user_id])
+  end
+
+  get '/footprints' do
+    authenticated!
+    footprints = get_footprints(50)
     erb :footprints, locals: { footprints: footprints }
   end
 
