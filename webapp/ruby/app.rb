@@ -78,7 +78,7 @@ SQL
       if cookies[:profile]
         Oj.load(cookies[:profile])
       else
-        profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', cookies[:user_id]).first
+        profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', cookies[:user_id].to_i).first
         if profile
           cookies[:profile] = Oj.dump(profile)
           profile
@@ -106,7 +106,7 @@ SQL
     end
 
     def is_friend?(another_id)
-      s, l = [another_id, cookies[:user_id]].sort
+      s, l = [another_id, cookies[:user_id].to_i].sort
       redis.sismember("r#{s}", l)
     end
 
@@ -121,13 +121,13 @@ SQL
     end
 
     def permitted?(another_id)
-      another_id == cookies[:user_id] || is_friend?(another_id)
+      another_id == cookies[:user_id].to_i || is_friend?(another_id)
     end
 
     def mark_footprint(user_id)
-      if user_id != cookies[:user_id]
+      if user_id != cookies[:user_id].to_i
         query = 'INSERT INTO footprints (user_id,owner_id) VALUES (?,?)'
-        db.xquery(query, user_id, cookies[:user_id])
+        db.xquery(query, user_id, cookies[:user_id].to_i)
       end
     end
 
@@ -167,7 +167,6 @@ SQL
   end
 
   get '/logout' do
-    cookies[:user_id] = nil
     cookies.clear
     redirect '/login'
   end
@@ -176,7 +175,7 @@ SQL
     authenticated!
 
     entries_query = 'SELECT * FROM entries WHERE user_id = ? ORDER BY id LIMIT 5'
-    entries = db.xquery(entries_query, cookies[:user_id])
+    entries = db.xquery(entries_query, cookies[:user_id].to_i)
       .map{ |entry|
       entry[:is_private] = (entry[:private] == 1);
       entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
@@ -191,9 +190,9 @@ WHERE e.user_id = ?
 ORDER BY c.id DESC
 LIMIT 10
 SQL
-    comments_for_me = db.xquery(comments_for_me_query, cookies[:user_id])
+    comments_for_me = db.xquery(comments_for_me_query, cookies[:user_id].to_i)
 
-    fids = get_friends_ids(cookies[:user_id])
+    fids = get_friends_ids(cookies[:user_id].to_i)
     entries_of_friends = db.xquery(
       'SELECT entries.*,users.nick_name,users.account_name FROM entries JOIN users ON users.id = user_id WHERE user_id IN (?) ORDER BY id DESC LIMIT 10', fids.join(",")).map do |entry|
       entry[:title] = entry[:body].split(/\n/, 2).first
@@ -210,7 +209,7 @@ SQL
       break if comments_of_friends.size >= 10
     end
 
-    friends = get_friends_map(cookies[:user_id])
+    friends = get_friends_map(cookies[:user_id].to_i)
 
     footprints = get_footprints(10)
 
@@ -255,12 +254,12 @@ UPDATE profiles
 SET first_name=?, last_name=?, sex=?, birthday=?, pref=?, updated_at=CURRENT_TIMESTAMP()
 WHERE user_id = ?
 SQL
-      args << cookies[:user_id]
+      args << cookies[:user_id].to_i
     else
       query = <<SQL
 INSERT INTO profiles (user_id,first_name,last_name,sex,birthday,pref) VALUES (?,?,?,?,?,?)
 SQL
-      args.unshift(cookies[:user_id])
+      args.unshift(cookies[:user_id].to_i)
     end
     db.xquery(query, *args)
     cookies[:profile] = nil
@@ -283,7 +282,7 @@ SQL
     mark_footprint(owner[:id])
     erb :entries, locals: { owner: owner,
                             entries: entries,
-                            myself: (cookies[:user_id] == owner[:id]) }
+                            myself: (cookies[:user_id].to_i == owner[:id]) }
   end
 
   get '/diary/entry/:entry_id' do
@@ -308,7 +307,7 @@ SQL
     authenticated!
     query = 'INSERT INTO entries (user_id, private, body) VALUES (?,?,?)'
     body = (params['title'] || "タイトルなし") + "\n" + params['content']
-    db.xquery(query, cookies[:user_id], (params['private'] ? '1' : '0'), body)
+    db.xquery(query, cookies[:user_id].to_i, (params['private'] ? '1' : '0'), body)
     redirect "/diary/entries/#{cookies[:account_name]}"
   end
 
@@ -323,7 +322,7 @@ SQL
       raise Isucon5::PermissionDenied
     end
     query = 'INSERT INTO comments (entry_id, user_id, comment) VALUES (?,?,?)'
-    db.xquery(query, entry[:id], cookies[:user_id], params['comment'])
+    db.xquery(query, entry[:id], cookies[:user_id].to_i, params['comment'])
     redis.hincrby("comments", entry[:id], 1)
     redirect "/diary/entry/#{entry[:id]}"
   end
@@ -337,7 +336,7 @@ WHERE user_id = ?
 GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
 SQL
-    db.xquery(query << " LIMIT #{c}", cookies[:user_id])
+    db.xquery(query << " LIMIT #{c}", cookies[:user_id].to_i)
   end
 
   get '/footprints' do
@@ -357,8 +356,8 @@ SQL
     authenticated!
     user = user_from_account(params['account_name'])
     unless is_friend?(user[:id])
-      s, l = [cookies[:user_id], user[:id]].sort
-      db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', cookies[:user_id], user[:id], user[:id], cookies[:user_id])
+      s, l = [cookies[:user_id].to_i, user[:id]].sort
+      db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', cookies[:user_id].to_i, user[:id], user[:id], cookies[:user_id].to_i)
       redis.sadd("r#{s}", l)
       redirect '/friends'
     end
