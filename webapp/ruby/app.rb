@@ -348,7 +348,7 @@ SQL
   get '/friends' do
     authenticated!
     qstr = "select nick_name,account_name,created_at from relations join users on users.id = another where one = ?"
-    friends = db.query(qstr, cookies[:user_id].to_i)
+    friends = db.xquery(qstr, cookies[:user_id].to_i)
     erb :friends, locals: { friends: friends }
   end
 
