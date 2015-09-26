@@ -74,12 +74,9 @@
     <% comments_of_friends.each do |comment| %>
     <div class="friend-comment">
       <ul class="list-group">
-        <% comment_owner = get_user(comment[:user_id]) %>
-        <% entry = db.xquery('SELECT * FROM entries WHERE id=?', comment[:entry_id]).first %>
-        <% entry_owner = get_user(entry[:user_id]) %>
         <li class="list-group-item comment-from-to">
-          <a href="/profile/<%= comment_owner[:account_name] %>"><%= comment_owner[:nick_name] %>さん</a>から
-          <a href="/profile/<%= entry_owner[:account_name] %>"><%= entry_owner[:nick_name] %>さん</a>へのコメント:
+          <a href="/profile/<%= comment[:account_name] %>"><%= comment[:nick_name] %>さん</a>から
+          <a href="/profile/<%= comment[:entry][:account_name] %>"><%= comment[:entry][:nick_name] %>さん</a>へのコメント:
         <li class="list-group-item comment-comment"><%= comment[:comment].size > 30 ? comment[:comment][0...27] + '...' : comment[:comment] %>
         <li class="list-group-item comment-created-at">投稿時刻:<%= comment[:created_at] %>
       </ul>

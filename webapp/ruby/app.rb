@@ -202,9 +202,10 @@ SQL
 
     comments_of_friends = []
     db.query('SELECT comments.*,users.* FROM comments JOIN users ON users.id = comments.user_id ORDER BY comments.created_at DESC LIMIT 100').each do |comment|
-      entry = db.xquery('SELECT * FROM entries WHERE id = ?', comment[:entry_id]).first
+      entry = db.xquery('SELECT private,user_id,account_name,nick_name FROM entries JOIN users ON users.id = entry_id WHERE id = ?', comment[:entry_id]).first
       entry[:is_private] = (entry[:private] == 1)
       next if entry[:is_private] && !permitted?(entry[:user_id])
+      comment[:entry] = entry
       comments_of_friends << comment
       break if comments_of_friends.size >= 10
     end
