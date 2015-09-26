@@ -88,21 +88,6 @@ SQL
       end
     end
 
-    # def current_user
-    #   { id: session[:user_id], account_name: session[:account_name] }
-    #   #return @user if @user
-    #   #unless session[:user_id]
-    #   #  return nil
-    #   #end
-    #   #@user = db.xquery('SELECT id, account_name, nick_name, email FROM users WHERE id=?', session[:user_id]).first
-    #   #unless @user
-    #   #  session[:user_id] = nil
-    #   #  session.clear
-    #   #  raise Isucon5::AuthenticationError
-    #   #end
-    #   #@user
-    # end
-
     def authenticated!
       redirect '/login' unless session[:user_id]
     end
@@ -392,8 +377,14 @@ SQL
     db.query("DELETE FROM entries WHERE id > 500000")
     db.query("DELETE FROM comments WHERE id > 1500000")
     redis.flushdb
-    db.query("select * from users").each do |row|
-      redis.hset("users", row[:account_name], Oj.dump(row))
+    a = []
+    db.query("select * from users", symbolize_keys: false).each_slice(100) do |row|
+      row.each do |aa|
+        a << aa["account_name"]
+        a << Oj.dump(aa)
+      end
+      redis.hmset("users", a)
+      a = []
     end
   end
 end
