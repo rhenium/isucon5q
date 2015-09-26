@@ -225,12 +225,14 @@ SQL
     owner = user_from_account(params['account_name'])
     prof = myprofile
     query = if permitted?(owner[:id])
-              'SELECT * FROM entries WHERE user_id = ? ORDER BY id LIMIT 5'
+              'SELECT entries.id,created_at,title,head,private FROM entries JOIN titles ON titles.id = entries.id WHERE user_id = ? ORDER BY entries.id LIMIT 5'
             else
               'SELECT * FROM entries WHERE user_id = ? AND private=0 ORDER BY id LIMIT 5'
             end
-    entries = db.xquery(query, owner[:id])
-      .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry[:title], entry[:content] = entry[:body].split(/\n/, 2); entry }
+    entries = db.xquery(query, owner[:id]).map{ |entry|
+      entry[:is_private] = (entry[:private] == 1);
+      #entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
+      entry }
     mark_footprint(owner[:id])
     erb :profile, locals: { owner: owner, profile: prof, entries: entries, private: permitted?(owner[:id]) }
   end
