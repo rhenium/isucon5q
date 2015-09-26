@@ -102,7 +102,7 @@ SQL
     def user_from_account(account_name)
       j = redis.hget("users", account_name)
       #user = db.xquery('SELECT * FROM users WHERE account_name = ?', account_name).first
-      raise Isucon5::ContentNotFound unless user
+      raise Isucon5::ContentNotFound unless j
       Oj.load(j)
     end
 
