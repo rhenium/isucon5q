@@ -32,10 +32,10 @@
   <% end %>
 </div>
 
-<% if session[:user_id] == owner[:id] %>
+<% if cookies[:user_id].to_i == owner[:id] %>
 <h2>プロフィール更新</h2>
 <div id="profile-post-form">
-  <form method="POST" action="/profile/<%= session[:account_name] %>">
+  <form method="POST" action="/profile/<%= cookies[:account_name] %>">
     <div>名字: <input type="text" name="last_name" placeholder="みょうじ" value="<%= profile[:last_name] %>" /></div>
     <div>名前: <input type="text" name="first_name" placeholder="なまえ" value="<%= profile[:first_name] %>" /></div>
     <div>性別:
