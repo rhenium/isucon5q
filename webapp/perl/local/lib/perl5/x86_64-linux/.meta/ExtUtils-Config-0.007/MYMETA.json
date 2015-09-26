@@ -1,0 +1,60 @@
+{
+   "abstract" : "A wrapper for perl's configuration",
+   "author" : [
+      "Ken Williams <kwilliams@cpan.org>",
+      "Leon Timmermans <leont@cpan.org>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Dist::Zilla version 4.300021, CPAN::Meta::Converter version 2.120921, CPAN::Meta::Converter version 2.150005",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "ExtUtils-Config",
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "File::Find" : "0",
+            "File::Temp" : "0",
+            "Test::More" : "0.88"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "6.30"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Config" : "0",
+            "Data::Dumper" : "0",
+            "strict" : "0",
+            "warnings" : "0"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "File::Find" : "0",
+            "File::Temp" : "0",
+            "Test::More" : "0.88"
+         }
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "bugtracker" : {
+         "mailto" : "bug-extutils-config at rt.cpan.org",
+         "web" : "http://rt.cpan.org/Public/Dist/Display.html?Name=ExtUtils-Config"
+      },
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/Leont/extutils-config.git",
+         "web" : "http://github.com/Leont/extutils-config"
+      }
+   },
+   "version" : "0.007",
+   "x_serialization_backend" : "JSON::PP version 2.27203"
+}

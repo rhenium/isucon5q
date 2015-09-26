@@ -1,0 +1,50 @@
+{
+   "abstract" : "HTTP Body Parser",
+   "author" : [
+      "Christian Hansen, C<chansen@cpan.org>",
+      "Sebastian Riedel, C<sri@cpan.org>",
+      "Andy Grundman, C<andy@hybridized.org>",
+      "Torsten Raudssus, C<getty@cpan.org>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Dist::Zilla version 4.300016, CPAN::Meta::Converter version 2.120630, CPAN::Meta::Converter version 2.150005",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "HTTP-Body",
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Test::Deep" : "0",
+            "Test::More" : "0.86"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "6.30"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Carp" : "0",
+            "Digest::MD5" : "0",
+            "File::Temp" : "0.14",
+            "HTTP::Headers" : "0",
+            "IO::File" : "1.14"
+         }
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "X_mailing_list" : "http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/catalyst-dev",
+      "repository" : {
+         "url" : "https://dev.catalystframework.org/repos/Catalyst/trunk/HTTP-Body/"
+      }
+   },
+   "version" : "1.17",
+   "x_serialization_backend" : "JSON::PP version 2.27203"
+}

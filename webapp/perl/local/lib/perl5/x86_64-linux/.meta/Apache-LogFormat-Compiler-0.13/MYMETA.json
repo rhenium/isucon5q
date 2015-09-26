@@ -1,0 +1,83 @@
+{
+   "abstract" : "Compile a log format string to perl-code ",
+   "author" : [
+      "Masahiro Nagano <kazeburo@gmail.com>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Minilla/v0.4.2, CPAN::Meta::Converter version 2.150005",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "Apache-LogFormat-Compiler",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "xt",
+         "inc",
+         "share",
+         "eg",
+         "examples",
+         "author"
+      ]
+   },
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "CPAN::Meta" : "0",
+            "CPAN::Meta::Prereqs" : "0",
+            "Module::Build" : "0.38"
+         }
+      },
+      "develop" : {
+         "requires" : {
+            "Test::CPAN::Meta" : "0",
+            "Test::MinimumVersion" : "0.10108",
+            "Test::Pod" : "1.41",
+            "Test::Spellunker" : "v0.2.2"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "POSIX" : "0",
+            "Time::Local" : "0",
+            "perl" : "5.008005"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "HTTP::Request::Common" : "0",
+            "Test::More" : "0.98",
+            "Test::Requires" : "0",
+            "Try::Tiny" : "0.12",
+            "URI::Escape" : "1.60"
+         }
+      }
+   },
+   "provides" : {
+      "Apache::LogFormat::Compiler" : {
+         "file" : "lib/Apache/LogFormat/Compiler.pm",
+         "version" : "0.13"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/kazeburo/Apache-LogFormat-Compiler/issues"
+      },
+      "homepage" : "https://github.com/kazeburo/Apache-LogFormat-Compiler",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/kazeburo/Apache-LogFormat-Compiler.git",
+         "web" : "https://github.com/kazeburo/Apache-LogFormat-Compiler"
+      }
+   },
+   "version" : "0.13",
+   "x_contributors" : [
+      "Florian Schlichting <fsfs@debian.org>"
+   ],
+   "x_serialization_backend" : "JSON::PP version 2.27203"
+}

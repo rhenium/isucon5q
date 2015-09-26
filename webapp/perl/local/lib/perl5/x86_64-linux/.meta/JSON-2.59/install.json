@@ -1,0 +1,1 @@
+{"provides":{"JSON::backportPP::Boolean":{"version":"2.27202","file":"lib/JSON/backportPP.pm"},"JSON::Boolean":{"version":"2.59","file":"lib/JSON.pm"},"JSON::Backend::PP":{"version":"2.59","file":"lib/JSON.pm"},"JSON":{"version":"2.59","file":"lib/JSON.pm"}},"name":"JSON","pathname":"M/MA/MAKAMAKA/JSON-2.59.tar.gz","version":"2.59","dist":"JSON-2.59","target":"JSON"}

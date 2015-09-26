@@ -1,0 +1,50 @@
+{
+   "abstract" : "A MySQL driver for the Perl5 Database Interface (DBI)",
+   "author" : [
+      "Patrick Galbraith <patg@patg.net>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "ExtUtils::MakeMaker version 6.57_05, CPAN::Meta::Converter version 2.150005",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "DBD-mysql",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "inc"
+      ]
+   },
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Test::Deep" : "0",
+            "Test::More" : "0"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "DBI" : "1.08"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "DBI" : "1.08",
+            "Data::Dumper" : "0",
+            "perl" : "5.005"
+         }
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "repository" : {
+         "url" : "https://github.com/perl5-dbi/DBD-mysql"
+      }
+   },
+   "version" : "4.024",
+   "x_serialization_backend" : "JSON::PP version 2.27203"
+}

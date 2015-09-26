@@ -1,0 +1,2 @@
+[0m[[0minfo[0m] [0mFormatting 4 Scala sources {file:/home/isucon/webapp/scala/}scala(compile) ...[0m
+[0m[[33mwarn[0m] [0mScalariform parser error for /home/isucon/webapp/scala/src/main/scala/isucon5/DB.scala: Expected token RBRACKET but got Token(XML_START_OPEN,<,6239,<)[0m

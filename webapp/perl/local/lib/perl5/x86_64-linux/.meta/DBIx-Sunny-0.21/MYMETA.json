@@ -1,0 +1,77 @@
+{
+   "abstract" : "Simple DBI wrapper",
+   "author" : [
+      "Masahiro Nagano E<lt>kazeburo KZBRKZBR@ gmail.comE<gt>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Module::Build version 0.4214",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "DBIx-Sunny",
+   "no_index" : {
+      "directory" : [
+         "inc",
+         "t",
+         "xt"
+      ]
+   },
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Capture::Tiny" : "0",
+            "DBD::SQLite" : "1.31",
+            "Test::More" : "0.98",
+            "Test::Requires" : "0",
+            "Test::TCP" : "0"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "Module::Build" : "0.38"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Class::Accessor::Lite" : "0.05",
+            "Class::Data::Inheritable" : "0",
+            "DBI" : "1.615",
+            "DBIx::TransactionManager" : "0",
+            "Data::Validator" : "0",
+            "Scalar::Util" : "0",
+            "parent" : "0",
+            "perl" : "5.008005"
+         }
+      }
+   },
+   "provides" : {
+      "DBIx::Sunny" : {
+         "file" : "lib/DBIx/Sunny.pm",
+         "version" : "0.21"
+      },
+      "DBIx::Sunny::Schema" : {
+         "file" : "lib/DBIx/Sunny/Schema.pm",
+         "version" : "0"
+      },
+      "DBIx::Sunny::db" : {
+         "file" : "lib/DBIx/Sunny.pm",
+         "version" : "0"
+      },
+      "DBIx::Sunny::st" : {
+         "file" : "lib/DBIx/Sunny.pm",
+         "version" : "0"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ]
+   },
+   "version" : "0.21",
+   "x_serialization_backend" : "JSON::PP version 2.27203"
+}

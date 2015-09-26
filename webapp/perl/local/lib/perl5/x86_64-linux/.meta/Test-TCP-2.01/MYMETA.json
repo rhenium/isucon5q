@@ -1,0 +1,104 @@
+{
+   "abstract" : "testing TCP program",
+   "author" : [
+      "Tokuhiro Matsuno <tokuhirom@gmail.com>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Minilla/v0.4.5, CPAN::Meta::Converter version 2.150005",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "Test-TCP",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "xt",
+         "inc",
+         "share",
+         "eg",
+         "examples",
+         "author"
+      ]
+   },
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "CPAN::Meta" : "0",
+            "CPAN::Meta::Prereqs" : "0",
+            "Module::Build" : "0.38"
+         }
+      },
+      "develop" : {
+         "requires" : {
+            "File::Which" : "0",
+            "Perl::Critic" : "1.105",
+            "Test::CPAN::Meta" : "0",
+            "Test::MinimumVersion" : "0.10108",
+            "Test::Perl::Critic" : "1.02",
+            "Test::Pod" : "1.41",
+            "Test::Spellunker" : "v0.2.7"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "IO::Socket::INET" : "0",
+            "Test::More" : "0",
+            "Test::SharedFork" : "0.19",
+            "Time::HiRes" : "0",
+            "perl" : "5.008001"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "File::Temp" : "0",
+            "Socket" : "0",
+            "Test::More" : "0.98"
+         }
+      }
+   },
+   "provides" : {
+      "Net::EmptyPort" : {
+         "file" : "lib/Net/EmptyPort.pm"
+      },
+      "Test::TCP" : {
+         "file" : "lib/Test/TCP.pm",
+         "version" : "2.01"
+      },
+      "Test::TCP::CheckPort" : {
+         "file" : "lib/Test/TCP/CheckPort.pm"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/tokuhirom/Test-TCP/issues"
+      },
+      "homepage" : "https://github.com/tokuhirom/Test-TCP",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/tokuhirom/Test-TCP.git",
+         "web" : "https://github.com/tokuhirom/Test-TCP"
+      }
+   },
+   "version" : "2.01",
+   "x_contributors" : [
+      "tokuhirom <tokuhirom@d0d07461-0603-4401-acd4-de1884942a52>",
+      "mattn <mattn@d0d07461-0603-4401-acd4-de1884942a52>",
+      "yappo <yappo@d0d07461-0603-4401-acd4-de1884942a52>",
+      "å¥¥ ä¸ç© <kazuho@EM114-48-138-123.pool.e-mobile.ne.jp>",
+      "gfx <gfuji@cpan.org>",
+      "Kenichi Ishigaki <ishigaki@cpan.org>",
+      "lestrrat <lestrrat+github@gmail.com>",
+      "Masahiro Nagano <kazeburo@gmail.com>",
+      "Thomas Klausner <domm@plix.at>",
+      "Brendan Byrd <Perl@ResonatorSoft.org>",
+      "Pavel Shaydo <zwon@cpan.org>",
+      "Tatsuhiko Miyagawa <miyagawa@bulknews.net>",
+      "Christian Walde <walde.christian@googlemail.com>"
+   ],
+   "x_serialization_backend" : "JSON::PP version 2.27203"
+}
