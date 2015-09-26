@@ -107,12 +107,25 @@ SQL
     end
 
     def is_friend?(another_id)
-      s, l = [another_id, session[:user_id]].sort
-      #return redis.sismember("r#{s}", l)
+      s, l = [another_id, session[:user_id]]
+      return redis.sismember("r#{s}", l)
       user_id = session[:user_id]
       query = 'SELECT COUNT(1) AS cnt FROM relations WHERE (one = ? AND another = ?) OR (one = ? AND another = ?)'
       cnt = db.xquery(query, user_id, another_id, another_id, user_id).first[:cnt]
       cnt.to_i > 0 ? true : false
+    end
+
+    def get_friends_map(id)
+      friend_ids = redis.smemvers("r#{id}")
+      #friends_query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
+      #friends_map = {}
+      #db.xquery(friends_query, session[:user_id], session[:user_id]).each do |rel|
+      #  key = (rel[:one] == session[:user_id] ? :another : :one)
+      #  friends_map[rel[key]] ||= rel[:created_at]
+      #end
+      qstr = "select another,created_at from relations where one = #{session[:user_id]} and another in (#{friend_ids.join(",")})"
+      friends = db.query.map {|row| [row[:another], row[:created_at]] }
+      #friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
     end
 
     def is_friend_account?(account_name)
@@ -206,13 +219,7 @@ SQL
       break if comments_of_friends.size >= 10
     end
 
-    friends_query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
-    friends_map = {}
-    db.xquery(friends_query, session[:user_id], session[:user_id]).each do |rel|
-      key = (rel[:one] == session[:user_id] ? :another : :one)
-      friends_map[rel[key]] ||= rel[:created_at]
-    end
-    friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
+    friends = get_friends_map(session[:user_id])
 
     query = <<SQL
 SELECT users.*, user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
@@ -350,13 +357,14 @@ SQL
 
   get '/friends' do
     authenticated!
-    query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
-    friends = {}
-    db.xquery(query, session[:user_id], session[:user_id]).each do |rel|
-      key = (rel[:one] == session[:user_id] ? :another : :one)
-      friends[rel[key]] ||= rel[:created_at]
-    end
-    list = friends.map{|user_id, created_at| [user_id, created_at]}
+    #query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
+    #friends = {}
+    #db.xquery(query, session[:user_id], session[:user_id]).each do |rel|
+    #  key = (rel[:one] == session[:user_id] ? :another : :one)
+    #  friends[rel[key]] ||= rel[:created_at]
+    #end
+    #list = friends.map{|user_id, created_at| [user_id, created_at]}
+    list = get_friends_map(session[:user_id])
     erb :friends, locals: { friends: list }
   end
 
@@ -369,6 +377,8 @@ SQL
       end
       s, l = [session[:user_id], user[:id]].sort
       db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
+      redis.sadd("r#{session[:user_id]}", user[:id])
+      redis.sadd("r#{user[:id]}", session[:user_id])
       redirect '/friends'
     end
   end
@@ -387,6 +397,15 @@ SQL
       end
       redis.hmset("users", a)
       a = []
+    end
+
+    a = Hash.new {|a, b| a[b] = [] }
+    db.query("select * from relations").each do |row|
+      s, l = [row[:one], row[:another]]
+      a[s] << l
+    end
+    a.each do |k, vs|
+      redis.sadd("r#{v}", vs)
     end
   end
 end
