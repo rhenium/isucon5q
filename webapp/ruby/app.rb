@@ -116,7 +116,6 @@ SQL
     end
 
     def get_friends_ids(id)
-      #redis.smembers("r#{id}")
       qstr = "select another from relations where one = #{id}"
       friends = db.query(qstr).map {|row| row[:another] }
     end
@@ -130,16 +129,6 @@ SQL
         query = 'INSERT INTO footprints (user_id,owner_id) VALUES (?,?)'
         db.xquery(query, user_id, session[:user_id])
       end
-    end
-
-    PREFS = %w(
-      未入力
-      北海道 青森県 岩手県 宮城県 秋田県 山形県 福島県 茨城県 栃木県 群馬県 埼玉県 千葉県 東京都 神奈川県 新潟県 富山県
-      石川県 福井県 山梨県 長野県 岐阜県 静岡県 愛知県 三重県 滋賀県 京都府 大阪府 兵庫県 奈良県 和歌山県 鳥取県 島根県
-      岡山県 広島県 山口県 徳島県 香川県 愛媛県 高知県 福岡県 佐賀県 長崎県 熊本県 大分県 宮崎県 鹿児島県 沖縄県
-    )
-    def prefectures
-      PREFS
     end
   end
 
@@ -176,7 +165,7 @@ SQL
   get '/' do
     authenticated!
 
-    entries_query = 'SELECT * FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
+    entries_query = 'SELECT * FROM entries WHERE user_id = ? ORDER BY id LIMIT 5'
     entries = db.xquery(entries_query, session[:user_id])
       .map{ |entry|
       entry[:is_private] = (entry[:private] == 1);
@@ -189,20 +178,20 @@ FROM comments c
 JOIN users u ON u.id = c.user_id
 JOIN entries e ON c.entry_id = e.id
 WHERE e.user_id = ?
-ORDER BY c.created_at DESC
+ORDER BY c.id DESC
 LIMIT 10
 SQL
     comments_for_me = db.xquery(comments_for_me_query, session[:user_id])
 
     fids = get_friends_ids(session[:user_id])
     entries_of_friends = db.xquery(
-      'SELECT entries.*,users.nick_name,users.account_name FROM entries JOIN users ON users.id = user_id WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10', fids.join(",")).map do |entry|
+      'SELECT entries.*,users.nick_name,users.account_name FROM entries JOIN users ON users.id = user_id WHERE user_id IN (?) ORDER BY id DESC LIMIT 10', fids.join(",")).map do |entry|
       entry[:title] = entry[:body].split(/\n/, 2).first
       entry
     end
 
     comments_of_friends = []
-    db.query('SELECT comments.*,users.* FROM comments JOIN users ON users.id = comments.user_id ORDER BY comments.created_at DESC LIMIT 100').each do |comment|
+    db.query('SELECT comments.*,users.* FROM comments JOIN users ON users.id = comments.user_id ORDER BY comments.id DESC LIMIT 100').each do |comment|
       entry = db.xquery('SELECT private,user_id,account_name,nick_name FROM entries JOIN users ON users.id = user_id WHERE entries.id = ?', comment[:entry_id]).first
       entry[:is_private] = (entry[:private] == 1)
       next if entry[:is_private] && !permitted?(entry[:user_id])
@@ -232,9 +221,9 @@ SQL
     owner = user_from_account(params['account_name'])
     prof = myprofile
     query = if permitted?(owner[:id])
-              'SELECT * FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
+              'SELECT * FROM entries WHERE user_id = ? ORDER BY id LIMIT 5'
             else
-              'SELECT * FROM entries WHERE user_id = ? AND private=0 ORDER BY created_at LIMIT 5'
+              'SELECT * FROM entries WHERE user_id = ? AND private=0 ORDER BY id LIMIT 5'
             end
     entries = db.xquery(query, owner[:id])
       .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry[:title], entry[:content] = entry[:body].split(/\n/, 2); entry }
@@ -272,9 +261,9 @@ SQL
     authenticated!
     owner = user_from_account(params['account_name'])
     query = if permitted?(owner[:id])
-              'SELECT * FROM entries WHERE user_id = ? ORDER BY created_at DESC LIMIT 20'
+              'SELECT * FROM entries WHERE user_id = ? ORDER BY id DESC LIMIT 20'
             else
-              'SELECT * FROM entries WHERE user_id = ? AND private=0 ORDER BY created_at DESC LIMIT 20'
+              'SELECT * FROM entries WHERE user_id = ? AND private=0 ORDER BY id DESC LIMIT 20'
             end
     entries = db.xquery(query, owner[:id]).map{ |entry|
       entry[:is_private] = (entry[:private] == 1)
@@ -359,8 +348,6 @@ SQL
     unless is_friend?(user[:id])
       s, l = [session[:user_id], user[:id]].sort
       db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
-      #redis.sadd("r#{session[:user_id]}", user[:id])
-      #redis.sadd("r#{user[:id]}", session[:user_id])
       redis.sadd("r#{s}", l)
       redirect '/friends'
     end
