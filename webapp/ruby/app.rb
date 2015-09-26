@@ -108,7 +108,7 @@ SQL
 
     def is_friend?(another_id)
       s, l = [another_id, session[:user_id]].sort
-      return redis.sismember("r#{s}", l)
+      #return redis.sismember("r#{s}", l)
       user_id = session[:user_id]
       query = 'SELECT COUNT(1) AS cnt FROM relations WHERE (one = ? AND another = ?) OR (one = ? AND another = ?)'
       cnt = db.xquery(query, user_id, another_id, another_id, user_id).first[:cnt]
