@@ -116,7 +116,7 @@ SQL
     end
 
     def get_friends_map(id)
-      friend_ids = redis.smemvers("r#{id}")
+      friend_ids = redis.smembers("r#{id}")
       #friends_query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
       #friends_map = {}
       #db.xquery(friends_query, session[:user_id], session[:user_id]).each do |rel|
