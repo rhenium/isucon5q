@@ -210,11 +210,11 @@ SQL
 SELECT *
 FROM comments
 JOIN entries ON comments.entry_id = entries.id
-WHERE entries.user_id = ? AND comments.user_id IN (?)
+WHERE (entries.private == 0 OR entries.user_id IN (?)) AND comments.user_id IN (?)
 ORDER BY comments.created_at DESC
 LIMIT 10
 SQL
-    comments_of_friends = db.xquery(_q, session[:user_id], fids.join(",")).map do |comment|
+    comments_of_friends = db.xquery(_q, "#{session[:user_id]},#{fids.join(",")}", fids.join(",")).map do |comment|
       comment
     end
 
