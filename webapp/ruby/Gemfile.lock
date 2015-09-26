@@ -6,6 +6,7 @@ GEM
     mysql2 (0.4.0)
     mysql2-cs-bind (0.0.6)
       mysql2
+    oj (2.12.14)
     rack (1.6.4)
     rack-protection (1.5.3)
       rack
@@ -27,5 +28,9 @@ DEPENDENCIES
   erubis
   mysql2
   mysql2-cs-bind
+  oj
   sinatra
   unicorn
+
+BUNDLED WITH
+   1.10.6
