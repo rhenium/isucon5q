@@ -107,6 +107,7 @@ SQL
       redirect '/login' unless session[:user_id]
     end
 
+    # from erb
     def get_user(user_id)
       user = db.xquery('SELECT * FROM users WHERE id = ?', user_id).first
       raise Isucon5::ContentNotFound unless user
@@ -114,12 +115,15 @@ SQL
     end
 
     def user_from_account(account_name)
-      user = db.xquery('SELECT * FROM users WHERE account_name = ?', account_name).first
+      j = redis.hget("users", account_name)
+      #user = db.xquery('SELECT * FROM users WHERE account_name = ?', account_name).first
       raise Isucon5::ContentNotFound unless user
-      user
+      Oj.load(j)
     end
 
     def is_friend?(another_id)
+      s, l = [another_id, session[:user_id]].sort
+      return redis.sismember("r#{s}", l)
       user_id = session[:user_id]
       query = 'SELECT COUNT(1) AS cnt FROM relations WHERE (one = ? AND another = ?) OR (one = ? AND another = ?)'
       cnt = db.xquery(query, user_id, another_id, another_id, user_id).first[:cnt]
@@ -304,17 +308,19 @@ SQL
 
   get '/diary/entry/:entry_id' do
     authenticated!
-    entry = db.xquery('SELECT * FROM entries WHERE id = ?', params['entry_id']).first
+    entry = db.xquery('SELECT entries.*,users.nick_name AS nick_name FROM entries" +
+                      "join users on entries.user_id = users.id WHERE entries.id = ?', params['entry_id']).first
     raise Isucon5::ContentNotFound unless entry
     entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
     entry[:is_private] = (entry[:private] == 1)
-    owner = get_user(entry[:user_id])
-    if entry[:is_private] && !permitted?(owner[:id])
+    if entry[:is_private] && !permitted?(entry[:user_id])
       raise Isucon5::PermissionDenied
     end
     comments = db.xquery('SELECT * FROM comments WHERE entry_id = ?', entry[:id])
-    mark_footprint(owner[:id])
-    erb :entry, locals: { owner: owner, entry: entry, comments: comments }
+    mark_footprint(entry[:user_id])
+    erb :entry, locals: { owner: { nick_name: entry[:nick_name] },
+                          entry: entry,
+                          comments: comments }
   end
 
   post '/diary/entry' do
@@ -373,7 +379,9 @@ SQL
       unless user
         raise Isucon5::ContentNotFound
       end
-      db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
+      s, l = [session[:user_id], user[:id]].sort
+      redis.sadd("r#{s}", l)
+      #db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
       redirect '/friends'
     end
   end
@@ -383,5 +391,9 @@ SQL
     db.query("DELETE FROM footprints WHERE id > 500000")
     db.query("DELETE FROM entries WHERE id > 500000")
     db.query("DELETE FROM comments WHERE id > 1500000")
+    redis.flushdb
+    db.query("select * from users").each do |row|
+      redis.hset("users", row[:account_name], Oj.dump(row))
+    end
   end
 end
