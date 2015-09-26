@@ -11,6 +11,7 @@ GEM
     rack-protection (1.5.3)
       rack
     raindrops (0.15.0)
+    redis (3.2.1)
     sinatra (1.4.6)
       rack (~> 1.4)
       rack-protection (~> 1.4)
@@ -29,6 +30,7 @@ DEPENDENCIES
   mysql2
   mysql2-cs-bind
   oj
+  redis
   sinatra
   unicorn
 

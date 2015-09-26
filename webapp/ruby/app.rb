@@ -4,6 +4,7 @@ require 'mysql2-cs-bind'
 require 'tilt/erubis'
 require 'erubis'
 require "oj"
+require "redis"
 
 module Isucon5
   class AuthenticationError < StandardError; end
@@ -36,6 +37,10 @@ class Isucon5::WebApp < Sinatra::Base
           database: ENV['ISUCON5_DB_NAME'] || 'isucon5q',
         },
       }
+    end
+
+    def redis
+      Thread.current[:redis] ||= Redis.new
     end
 
     def db
