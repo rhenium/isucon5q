@@ -106,18 +106,19 @@ SQL
     end
 
     def is_friend?(another_id)
-      s, l = [another_id, session[:user_id]]
+      s, l = [another_id, session[:user_id]].sort
       redis.sismember("r#{s}", l)
     end
 
     def get_friends_map(id)
-      friend_ids = get_friends_ids(id)
-      qstr = "select another,created_at from relations where one = #{id} and another in (#{friend_ids.join(",")})"
+      qstr = "select another,created_at from relations where one = #{id}"
       friends = db.query(qstr).map {|row| [row[:another], row[:created_at]] }
     end
 
     def get_friends_ids(id)
-      redis.smembers("r#{id}")
+      #redis.smembers("r#{id}")
+      qstr = "select another from relations where one = #{id}"
+      friends = db.query(qstr).map {|row| row[:another] }
     end
 
     def permitted?(another_id)
@@ -358,8 +359,9 @@ SQL
     unless is_friend?(user[:id])
       s, l = [session[:user_id], user[:id]].sort
       db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
-      redis.sadd("r#{session[:user_id]}", user[:id])
-      redis.sadd("r#{user[:id]}", session[:user_id])
+      #redis.sadd("r#{session[:user_id]}", user[:id])
+      #redis.sadd("r#{user[:id]}", session[:user_id])
+      redis.sadd("r#{s}", l)l)
       redirect '/friends'
     end
   end
