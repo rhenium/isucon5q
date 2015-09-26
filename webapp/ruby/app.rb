@@ -123,7 +123,7 @@ SQL
       #  key = (rel[:one] == session[:user_id] ? :another : :one)
       #  friends_map[rel[key]] ||= rel[:created_at]
       #end
-      qstr = "select another,created_at from relations where one = #{session[:user_id]} and another in (#{friend_ids.join(",")})"
+      qstr = "select another,created_at from relations where one = #{id} and another in (#{friend_ids.join(",")})"
       friends = db.query(qstr).map {|row| [row[:another], row[:created_at]] }
       #friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
     end
@@ -405,7 +405,8 @@ SQL
       a[s] << l
     end
     a.each do |k, vs|
-      redis.sadd("r#{v}", vs)
+      redis.sadd("r#{k}", vs)
     end
+    nil
   end
 end
