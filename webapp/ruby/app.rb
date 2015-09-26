@@ -214,7 +214,7 @@ WHERE entries.user_id = ? AND comments.user_id IN (?)
 ORDER BY comments.created_at DESC
 LIMIT 10
 SQL
-    comments_of_friends = db.xquery(q, session[:user_id], fids.join(",")).map do |comment|
+    comments_of_friends = db.xquery(_q, session[:user_id], fids.join(",")).map do |comment|
       comment
     end
 
