@@ -318,12 +318,11 @@ SQL
 
   post '/diary/comment/:entry_id' do
     authenticated!
-    entry = db.xquery('SELECT * FROM entries WHERE id = ?', params['entry_id']).first
+    entry = db.xquery('SELECT id FROM entries WHERE id = ?', params['entry_id']).first
     unless entry
       raise Isucon5::ContentNotFound
     end
-    entry[:is_private] = (entry[:private] == 1)
-    if entry[:is_private] && !permitted?(entry[:user_id])
+    if entry[:private] == 1 && !permitted?(entry[:user_id])
       raise Isucon5::PermissionDenied
     end
     query = 'INSERT INTO comments (entry_id, user_id, comment) VALUES (?,?,?)'
