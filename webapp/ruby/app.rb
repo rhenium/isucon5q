@@ -198,7 +198,7 @@ LIMIT 10
 SQL
     comments_for_me = db.xquery(comments_for_me_query, session[:user_id])
 
-    fids = get_friends_ids
+    fids = get_friends_ids(session[:user_id])
     entries_of_friends = db.xquery(
       'SELECT * FROM entries WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10', fids.join(",")).map do |entry|
       entry[:title] = entry[:body].split(/\n/).first
