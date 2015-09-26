@@ -116,16 +116,13 @@ SQL
     end
 
     def get_friends_map(id)
-      friend_ids = redis.smembers("r#{id}")
-      #friends_query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
-      #friends_map = {}
-      #db.xquery(friends_query, session[:user_id], session[:user_id]).each do |rel|
-      #  key = (rel[:one] == session[:user_id] ? :another : :one)
-      #  friends_map[rel[key]] ||= rel[:created_at]
-      #end
+      friend_ids = get_friends_ids(id)
       qstr = "select another,created_at from relations where one = #{id} and another in (#{friend_ids.join(",")})"
       friends = db.query(qstr).map {|row| [row[:another], row[:created_at]] }
-      #friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
+    end
+    
+    def get_friends_ids(id)
+      redis.smembers("r#{id}")
     end
 
     def is_friend_account?(account_name)
@@ -201,22 +198,17 @@ LIMIT 10
 SQL
     comments_for_me = db.xquery(comments_for_me_query, session[:user_id])
 
-    entries_of_friends = []
-    db.query('SELECT * FROM entries ORDER BY created_at DESC LIMIT 1000').each do |entry|
-      next unless is_friend?(entry[:user_id])
+    fids = get_friends_ids
+    entries_of_friends = db.xquery(
+      'SELECT * FROM entries WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10', fids.join(",")).map do |entry|
       entry[:title] = entry[:body].split(/\n/).first
-      entries_of_friends << entry
-      break if entries_of_friends.size >= 10
     end
 
-    comments_of_friends = []
-    db.query('SELECT * FROM comments ORDER BY created_at DESC LIMIT 1000').each do |comment|
-      next unless is_friend?(comment[:user_id])
+    comments_of_friends = db.xquery(
+      'SELECT * FROM comments WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 1000', fids.join(",")).each do |comment|
       entry = db.xquery('SELECT * FROM entries WHERE id = ?', comment[:entry_id]).first
       entry[:is_private] = (entry[:private] == 1)
-      next if entry[:is_private] && !permitted?(entry[:user_id])
-      comments_of_friends << comment
-      break if comments_of_friends.size >= 10
+      #next if entry[:is_private] && !permitted?(entry[:user_id])
     end
 
     friends = get_friends_map(session[:user_id])
