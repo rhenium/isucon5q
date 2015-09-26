@@ -347,8 +347,9 @@ SQL
 
   get '/friends' do
     authenticated!
-    list = get_friends_map(cookies[:user_id])
-    erb :friends, locals: { friends: list }
+    qstr = "select nick_name,account_name,created_at from relations join users on users.id = another where one = #{id}"
+    friends = db.query(qstr)
+    erb :friends, locals: { friends: friends }
   end
 
   post '/friends/:account_name' do
