@@ -14,8 +14,7 @@
 <div class="row panel panel-primary" id="entry-comments">
   <% comments.each do |comment| %>
   <div class="comment">
-    <% comment_user = get_user(comment[:user_id]) %>
-    <div class="comment-owner"><a href="/profile/<%= comment_user[:account_name] %>"><%= comment_user[:nick_name] %>さん</a></div>
+    <div class="comment-owner"><a href="/profile/<%= comment[:account_name] %>"><%= comment[:nick_name] %>さん</a></div>
     <div class="comment-comment">
       <% comment[:comment].split(/\n/).each do |line| %>
       <%= line %><br />
