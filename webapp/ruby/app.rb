@@ -257,7 +257,12 @@ SQL
       args.unshift(cookies[:user_id].to_i)
     end
     db.xquery(query, *args)
-    cookies[:profile] = nil
+    cookies[:profile] = Oj.dump(user_id: cookies[:user_id].to_i,
+                                first_name: params['first_name'],
+                                last_name: params['last_name'],
+                                sex: params['sex'],
+                                birthday: params['birthday'],
+                                pref: params['pref'])
     redirect "/profile/#{params['account_name']}"
   end
 
