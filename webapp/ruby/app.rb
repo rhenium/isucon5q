@@ -23,7 +23,7 @@ class Isucon5::WebApp < Sinatra::Base
   set :erb, escape_html: true
   set :public_folder, File.expand_path('../../static', __FILE__)
   set :protection, true
-  helper Sinatra::Cookies
+  helpers Sinatra::Cookies
 
   helpers do
     def config
