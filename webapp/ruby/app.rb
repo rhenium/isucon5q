@@ -276,7 +276,7 @@ SQL
     entries = db.xquery(query, owner[:id]).map{ |entry|
       entry[:is_private] = (entry[:private] == 1)
       entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
-      entry[:cc] = redis.hget("comments", entry[:id])
+      entry[:cc] = redis.hget("comments", entry[:id]) || 0
       entry }
     mark_footprint(owner[:id])
     erb :entries, locals: { owner: owner,
@@ -391,7 +391,7 @@ SQL
 
     ## comments
     a = []
-    db.query("select count(distinct entry_id) AS c,entry_id from comments").each do |row|
+    db.query("select count(*) AS c,entry_id from comments group by entry_id").each do |row|
       a << row[:entry_id]
       a << row[:c]
     end
