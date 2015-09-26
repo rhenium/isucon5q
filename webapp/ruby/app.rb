@@ -215,7 +215,7 @@ SQL
     friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
 
     query = <<SQL
-SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at),users.* AS updated
+SELECT users.*, user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
 FROM footprints
 JOIN users ON owner_id = users.id
 WHERE user_id = ?
@@ -336,8 +336,9 @@ SQL
   get '/footprints' do
     authenticated!
     query = <<SQL
-SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
+SELECT users.*,user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
 FROM footprints
+JOIN users ON owner_id = users.id
 WHERE user_id = ?
 GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
