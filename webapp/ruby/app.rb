@@ -279,7 +279,7 @@ SQL
       entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
       #entry[:cc] = redis.hget("comments", entry[:id]) || 0
       entry }
-    redis.hmget("comments", entry[:id]).each_with_index {|cc, i|
+    redis.hmget("comments", entries.map {|e|e[:id]}).each_with_index {|cc, i|
       entries[i][:cc] = (cc || 0) }
     mark_footprint(owner[:id])
     erb :entries, locals: { owner: owner,
