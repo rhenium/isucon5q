@@ -293,8 +293,8 @@ SQL
 
   get '/diary/entry/:entry_id' do
     authenticated!
-    entry = db.xquery('SELECT entries.*,users.nick_name AS nick_name FROM entries " +
-                      "JOIN users ON entries.user_id = users.id WHERE entries.id = ?', params['entry_id']).first
+    entry = db.xquery('SELECT entries.*,users.nick_name AS nick_name FROM entries ' +
+                      'JOIN users ON entries.user_id = users.id WHERE entries.id = ?', params['entry_id']).first
     raise Isucon5::ContentNotFound unless entry
     entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
     entry[:is_private] = (entry[:private] == 1)
