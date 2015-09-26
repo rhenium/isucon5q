@@ -177,7 +177,10 @@ SQL
 
     entries_query = 'SELECT * FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
     entries = db.xquery(entries_query, session[:user_id])
-      .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry[:title], entry[:content] = entry[:body].split(/\n/, 2); entry }
+      .map{ |entry|
+      entry[:is_private] = (entry[:private] == 1);
+      entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
+      entry }
 
     comments_for_me_query = <<SQL
 SELECT c.id AS id, c.entry_id AS entry_id, c.user_id AS user_id, c.comment AS comment, c.created_at AS created_at
@@ -192,7 +195,7 @@ SQL
     fids = get_friends_ids(session[:user_id])
     entries_of_friends = db.xquery(
       'SELECT * FROM entries WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10', fids.join(",")).map do |entry|
-      entry[:title] = entry[:body].split(/\n/).first
+      entry[:title] = entry[:body].split(/\n/, 2).first
       entry
     end
 
@@ -270,10 +273,15 @@ SQL
             else
               'SELECT * FROM entries WHERE user_id = ? AND private=0 ORDER BY created_at DESC LIMIT 20'
             end
-    entries = db.xquery(query, owner[:id])
-      .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry[:title], entry[:content] = entry[:body].split(/\n/, 2); entry }
+    entries = db.xquery(query, owner[:id]).map{ |entry|
+      entry[:is_private] = (entry[:private] == 1)
+      entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
+      entry[:cc] = redis.hget("comments", entry[:id])
+      entry }
     mark_footprint(owner[:id])
-    erb :entries, locals: { owner: owner, entries: entries, myself: (session[:user_id] == owner[:id]) }
+    erb :entries, locals: { owner: owner,
+                            entries: entries,
+                            myself: (session[:user_id] == owner[:id]) }
   end
 
   get '/diary/entry/:entry_id' do
@@ -314,6 +322,7 @@ SQL
     end
     query = 'INSERT INTO comments (entry_id, user_id, comment) VALUES (?,?,?)'
     db.xquery(query, entry[:id], session[:user_id], params['comment'])
+    redis.hincrby("comments", entry[:id], 1)
     redirect "/diary/entry/#{entry[:id]}"
   end
 
@@ -359,6 +368,7 @@ SQL
     db.query("DELETE FROM entries WHERE id > 500000")
     db.query("DELETE FROM comments WHERE id > 1500000")
     redis.flushdb
+    ## users
     a = []
     db.query("select * from users", symbolize_keys: false).each_slice(100) do |row|
       row.each do |aa|
@@ -369,6 +379,7 @@ SQL
       a = []
     end
 
+    ## relation
     a = Hash.new {|a, b| a[b] = [] }
     db.query("select * from relations").each do |row|
       s, l = [row[:one], row[:another]]
@@ -377,6 +388,14 @@ SQL
     a.each do |k, vs|
       redis.sadd("r#{k}", vs)
     end
+
+    ## comments
+    a = []
+    db.query("select count(distinct entry_id) AS c,entry_id from comments").each do |row|
+      a << row[:entry_id]
+      a << row[:c]
+    end
+    redis.hmset("comments", a)
     nil
   end
 end
