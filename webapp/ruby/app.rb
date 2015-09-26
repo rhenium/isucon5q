@@ -1,4 +1,5 @@
 require 'sinatra/base'
+require "sinatra/cookies"
 require 'mysql2'
 require 'mysql2-cs-bind'
 require 'tilt/erubis'
@@ -19,12 +20,10 @@ module Isucon5
 end
 
 class Isucon5::WebApp < Sinatra::Base
-  use Rack::Session::Cookie
   set :erb, escape_html: true
   set :public_folder, File.expand_path('../../static', __FILE__)
-  #set :sessions, true
-  set :session_secret, ENV['ISUCON5_SESSION_SECRET'] || 'beermoris'
   set :protection, true
+  helper Sinatra::Cookies
 
   helpers do
     def config
@@ -67,20 +66,20 @@ WHERE u.email = ? AND u.passhash = SHA2(CONCAT(?, s.salt), 512)
 SQL
       result = db.xquery(query, email, password).first
       raise Isucon5::AuthenticationError unless result
-      session[:user_id] = result[:user_id]
-      session[:account_name] = result[:account_name]
-      session[:nick_name] = result[:nick_name]
-      session[:email] = result[:email]
+      cookies[:user_id] = result[:user_id]
+      cookies[:account_name] = result[:account_name]
+      cookies[:nick_name] = result[:nick_name]
+      cookies[:email] = result[:email]
       result
     end
 
     def myprofile
-      if session[:profile]
-        Oj.load(session[:profile])
+      if cookies[:profile]
+        Oj.load(cookies[:profile])
       else
-        profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', session[:user_id]).first
+        profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', cookies[:user_id]).first
         if profile
-          session[:profile] = Oj.dump(profile)
+          cookies[:profile] = Oj.dump(profile)
           profile
         else
           nil
@@ -89,7 +88,7 @@ SQL
     end
 
     def authenticated!
-      redirect '/login' unless session[:user_id]
+      redirect '/login' unless cookies[:user_id]
     end
 
     # from erb
@@ -106,7 +105,7 @@ SQL
     end
 
     def is_friend?(another_id)
-      s, l = [another_id, session[:user_id]].sort
+      s, l = [another_id, cookies[:user_id]].sort
       redis.sismember("r#{s}", l)
     end
 
@@ -121,13 +120,13 @@ SQL
     end
 
     def permitted?(another_id)
-      another_id == session[:user_id] || is_friend?(another_id)
+      another_id == cookies[:user_id] || is_friend?(another_id)
     end
 
     def mark_footprint(user_id)
-      if user_id != session[:user_id]
+      if user_id != cookies[:user_id]
         query = 'INSERT INTO footprints (user_id,owner_id) VALUES (?,?)'
-        db.xquery(query, user_id, session[:user_id])
+        db.xquery(query, user_id, cookies[:user_id])
       end
     end
 
@@ -143,8 +142,8 @@ SQL
   end
 
   error Isucon5::AuthenticationError do
-    session[:user_id] = nil
-    session[:account_name] = nil
+    cookies[:user_id] = nil
+    cookies[:account_name] = nil
     halt 401, erubis(:login, layout: false, locals: { message: 'ログインに失敗しました' })
   end
 
@@ -157,7 +156,7 @@ SQL
   end
 
   get '/login' do
-    session.clear
+    cookies.clear
     erb :login, layout: false, locals: { message: '高負荷に耐えられるSNSコミュニティサイトへようこそ!' }
   end
 
@@ -167,8 +166,8 @@ SQL
   end
 
   get '/logout' do
-    session[:user_id] = nil
-    session.clear
+    cookies[:user_id] = nil
+    cookies.clear
     redirect '/login'
   end
 
@@ -176,7 +175,7 @@ SQL
     authenticated!
 
     entries_query = 'SELECT * FROM entries WHERE user_id = ? ORDER BY id LIMIT 5'
-    entries = db.xquery(entries_query, session[:user_id])
+    entries = db.xquery(entries_query, cookies[:user_id])
       .map{ |entry|
       entry[:is_private] = (entry[:private] == 1);
       entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
@@ -191,9 +190,9 @@ WHERE e.user_id = ?
 ORDER BY c.id DESC
 LIMIT 10
 SQL
-    comments_for_me = db.xquery(comments_for_me_query, session[:user_id])
+    comments_for_me = db.xquery(comments_for_me_query, cookies[:user_id])
 
-    fids = get_friends_ids(session[:user_id])
+    fids = get_friends_ids(cookies[:user_id])
     entries_of_friends = db.xquery(
       'SELECT entries.*,users.nick_name,users.account_name FROM entries JOIN users ON users.id = user_id WHERE user_id IN (?) ORDER BY id DESC LIMIT 10', fids.join(",")).map do |entry|
       entry[:title] = entry[:body].split(/\n/, 2).first
@@ -210,7 +209,7 @@ SQL
       break if comments_of_friends.size >= 10
     end
 
-    friends = get_friends_map(session[:user_id])
+    friends = get_friends_map(cookies[:user_id])
 
     footprints = get_footprints(10)
 
@@ -243,7 +242,7 @@ SQL
 
   post '/profile/:account_name' do
     authenticated!
-    if params['account_name'] != session[:account_name]
+    if params['account_name'] != cookies[:account_name]
       raise Isucon5::PermissionDenied
     end
     args = [params['first_name'], params['last_name'], params['sex'], params['birthday'], params['pref']]
@@ -255,15 +254,15 @@ UPDATE profiles
 SET first_name=?, last_name=?, sex=?, birthday=?, pref=?, updated_at=CURRENT_TIMESTAMP()
 WHERE user_id = ?
 SQL
-      args << session[:user_id]
+      args << cookies[:user_id]
     else
       query = <<SQL
 INSERT INTO profiles (user_id,first_name,last_name,sex,birthday,pref) VALUES (?,?,?,?,?,?)
 SQL
-      args.unshift(session[:user_id])
+      args.unshift(cookies[:user_id])
     end
     db.xquery(query, *args)
-    session[:profile] = nil
+    cookies[:profile] = nil
     redirect "/profile/#{params['account_name']}"
   end
 
@@ -283,7 +282,7 @@ SQL
     mark_footprint(owner[:id])
     erb :entries, locals: { owner: owner,
                             entries: entries,
-                            myself: (session[:user_id] == owner[:id]) }
+                            myself: (cookies[:user_id] == owner[:id]) }
   end
 
   get '/diary/entry/:entry_id' do
@@ -308,8 +307,8 @@ SQL
     authenticated!
     query = 'INSERT INTO entries (user_id, private, body) VALUES (?,?,?)'
     body = (params['title'] || "タイトルなし") + "\n" + params['content']
-    db.xquery(query, session[:user_id], (params['private'] ? '1' : '0'), body)
-    redirect "/diary/entries/#{session[:account_name]}"
+    db.xquery(query, cookies[:user_id], (params['private'] ? '1' : '0'), body)
+    redirect "/diary/entries/#{cookies[:account_name]}"
   end
 
   post '/diary/comment/:entry_id' do
@@ -323,7 +322,7 @@ SQL
       raise Isucon5::PermissionDenied
     end
     query = 'INSERT INTO comments (entry_id, user_id, comment) VALUES (?,?,?)'
-    db.xquery(query, entry[:id], session[:user_id], params['comment'])
+    db.xquery(query, entry[:id], cookies[:user_id], params['comment'])
     redis.hincrby("comments", entry[:id], 1)
     redirect "/diary/entry/#{entry[:id]}"
   end
@@ -337,7 +336,7 @@ WHERE user_id = ?
 GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
 SQL
-    db.xquery(query << " LIMIT #{c}", session[:user_id])
+    db.xquery(query << " LIMIT #{c}", cookies[:user_id])
   end
 
   get '/footprints' do
@@ -348,7 +347,7 @@ SQL
 
   get '/friends' do
     authenticated!
-    list = get_friends_map(session[:user_id])
+    list = get_friends_map(cookies[:user_id])
     erb :friends, locals: { friends: list }
   end
 
@@ -356,8 +355,8 @@ SQL
     authenticated!
     user = user_from_account(params['account_name'])
     unless is_friend?(user[:id])
-      s, l = [session[:user_id], user[:id]].sort
-      db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
+      s, l = [cookies[:user_id], user[:id]].sort
+      db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', cookies[:user_id], user[:id], user[:id], cookies[:user_id])
       redis.sadd("r#{s}", l)
       redirect '/friends'
     end
@@ -397,12 +396,6 @@ SQL
       a << row[:c]
     end
     redis.hmset("comments", a)
-
-    ## titles
-    db.query("select id,substring(body, 0, instr(body, '\\n')) as title from entries").each_slice(100) do |row|
-      a << row[:id]
-      a << row[:title]
-    end
     nil
   end
 end
