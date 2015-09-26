@@ -397,6 +397,12 @@ SQL
       a << row[:c]
     end
     redis.hmset("comments", a)
+
+    ## titles
+    db.query("select id,substring(body, 0, instr(body, '\\n')) as title from entries").each_slice(100) do |row|
+      a << row[:id]
+      a << row[:title]
+    end
     nil
   end
 end
