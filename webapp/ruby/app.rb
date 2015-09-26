@@ -62,9 +62,10 @@ WHERE u.email = ? AND u.passhash = SHA2(CONCAT(?, s.salt), 512)
 SQL
       result = db.xquery(query, email, password).first
       raise Isucon5::AuthenticationError unless result
-      result.each do |k, v|
-        session[k] = v
-      end
+      session[:user_id] = result[:user_id]
+      session[:account_name] = result[:account_name]
+      session[:nick_name] = result[:nick_name]
+      session[:email] = result[:email]
       result
     end
 
