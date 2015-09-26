@@ -307,7 +307,7 @@ SQL
     query = 'INSERT INTO entries (user_id, private, body) VALUES (?,?,?)'
     db.xquery(query, cookies[:user_id].to_i, (params['private'] ? '1' : '0'), body)
     query = 'INSERT INTO titles (id, title, head) VALUES (?,?,?)'
-    db.xquery(query, db.last_id, title, title)
+    db.xquery(query, db.last_id, title, "." << body[0..60])
     redirect "/diary/entries/#{cookies[:account_name]}"
   end
 
