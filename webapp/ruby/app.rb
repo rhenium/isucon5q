@@ -24,6 +24,7 @@ class Isucon5::WebApp < Sinatra::Base
   set :public_folder, File.expand_path('../../static', __FILE__)
   set :protection, true
   helpers Sinatra::Cookies
+  set :cookie_options, domain: nil
 
   helpers do
     def config
