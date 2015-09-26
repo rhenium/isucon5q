@@ -217,6 +217,7 @@ SQL
     query = <<SQL
 SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
 FROM footprints
+JOIN users ON owner_id = users.id
 WHERE user_id = ?
 GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
