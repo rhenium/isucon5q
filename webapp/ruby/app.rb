@@ -361,7 +361,7 @@ SQL
       db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
       #redis.sadd("r#{session[:user_id]}", user[:id])
       #redis.sadd("r#{user[:id]}", session[:user_id])
-      redis.sadd("r#{s}", l)l)
+      redis.sadd("r#{s}", l)
       redirect '/friends'
     end
   end
