@@ -206,33 +206,13 @@ SQL
     end
 
     comments_of_friends = []
-    _q = <<SQL
-SELECT *
-FROM comments
-JOIN entries ON comments.entry_id = entries.id
-WHERE (entries.private == 0 OR entries.user_id IN (?)) AND comments.user_id IN (?)
-ORDER BY comments.created_at DESC
-LIMIT 10
-SQL
-    comments_of_friends = db.xquery(_q, "#{session[:user_id]},#{fids.join(",")}", fids.join(",")).map do |comment|
-      comment
+    db.query('SELECT comments.*,users.* FROM comments JOIN users ON users.id = comments.user_id ORDER BY comments.created_at DESC LIMIT 100').each do |comment|
+      entry = db.xquery('SELECT * FROM entries WHERE id = ?', comment[:entry_id]).first
+      entry[:is_private] = (entry[:private] == 1)
+      next if entry[:is_private] && !permitted?(entry[:user_id])
+      comments_of_friends << comment
+      break if comments_of_friends.size >= 10
     end
-
-    #db.query('SELECT * FROM comments ORDER BY created_at DESC LIMIT 1000').each do |comment|
-    #  next unless is_friend?(comment[:user_id])
-    #  entry = db.xquery('SELECT * FROM entries WHERE id = ?', comment[:entry_id]).first
-    #  entry[:is_private] = (entry[:private] == 1)
-    #  next if entry[:is_private] && !permitted?(entry[:user_id])
-    #  comments_of_friends << comment
-    #  break if comments_of_friends.size >= 10
-    #end
-    #comments_of_friends = db.xquery(
-    #  'SELECT * FROM comments WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10', fids.join(",")).each do |comment|
-    #  entry = db.xquery('SELECT * FROM entries WHERE id = ?', comment[:entry_id]).first
-    #  entry[:is_private] = (entry[:private] == 1)
-    #  #next if entry[:is_private] && !permitted?(entry[:user_id])
-    #  entry
-    #end
 
     friends = get_friends_map(session[:user_id])
 
