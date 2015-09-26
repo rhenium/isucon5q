@@ -60,8 +60,7 @@
     <% entries_of_friends.each do |entry| %>
     <div class="friend-entry">
       <ul class="list-group">
-        <% entry_owner = get_user(entry[:user_id]) %>
-        <li class="list-group-item entry-owner"><a href="/diary/entries/<%= entry_owner[:account_name] %>"><%= entry_owner[:nick_name] %>さん</a>:
+        <li class="list-group-item entry-owner"><a href="/diary/entries/<%= entry[:account_name] %>"><%= entry[:nick_name] %>さん</a>:
         <li class="list-group-item entry-title"><a href="/diary/entry/<%= entry[:id] %>"><%= entry[:title] %></a>
         <li class="list-group-item entry-created-at">投稿時刻:<%= entry[:created_at] %>
       </ul>

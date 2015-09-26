@@ -194,7 +194,7 @@ SQL
 
     fids = get_friends_ids(session[:user_id])
     entries_of_friends = db.xquery(
-      'SELECT * FROM entries WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10', fids.join(",")).map do |entry|
+      'SELECT entries.*,users.nick_name,users.account_name FROM entries JOIN users ON users.id = user_id WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10', fids.join(",")).map do |entry|
       entry[:title] = entry[:body].split(/\n/, 2).first
       entry
     end
