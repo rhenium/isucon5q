@@ -103,7 +103,7 @@ SQL
       j = redis.hget("users", account_name)
       #user = db.xquery('SELECT * FROM users WHERE account_name = ?', account_name).first
       raise Isucon5::ContentNotFound unless j
-      Oj.load(j)
+      Oj.load(j).map {|k, v| [k.to_sym, v] }.to_h
     end
 
     def is_friend?(another_id)
