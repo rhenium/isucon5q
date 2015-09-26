@@ -1,6 +1,5 @@
 require 'sinatra/base'
 require "sinatra/cookies"
-require 'mysql2'
 require 'mysql2-cs-bind'
 require 'tilt/erubis'
 require 'erubis'
@@ -22,7 +21,6 @@ end
 class Isucon5::WebApp < Sinatra::Base
   set :erb, escape_html: true
   set :public_folder, File.expand_path('../../static', __FILE__)
-  set :protection, true
   helpers Sinatra::Cookies
   set :cookie_options, domain: nil
 
