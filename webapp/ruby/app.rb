@@ -60,31 +60,29 @@ JOIN salts s ON u.id = s.user_id
 WHERE u.email = ? AND u.passhash = SHA2(CONCAT(?, s.salt), 512)
 SQL
       result = db.xquery(query, email, password).first
-      unless result
-        raise Isucon5::AuthenticationError
-      end
+      raise Isucon5::AuthenticationError unless result
       session[:user_id] = result[:id]
+      session[:account_name] = result[:account_name]
       result
     end
 
-    def current_user
-      return @user if @user
-      unless session[:user_id]
-        return nil
-      end
-      @user = db.xquery('SELECT id, account_name, nick_name, email FROM users WHERE id=?', session[:user_id]).first
-      unless @user
-        session[:user_id] = nil
-        session.clear
-        raise Isucon5::AuthenticationError
-      end
-      @user
-    end
+    # def current_user
+    #   { id: session[:user_id], account_name: session[:account_name] }
+    #   #return @user if @user
+    #   #unless session[:user_id]
+    #   #  return nil
+    #   #end
+    #   #@user = db.xquery('SELECT id, account_name, nick_name, email FROM users WHERE id=?', session[:user_id]).first
+    #   #unless @user
+    #   #  session[:user_id] = nil
+    #   #  session.clear
+    #   #  raise Isucon5::AuthenticationError
+    #   #end
+    #   #@user
+    # end
 
     def authenticated!
-      unless current_user
-        redirect '/login'
-      end
+      redirect '/login' unless session[:user_id]
     end
 
     def get_user(user_id)
@@ -111,13 +109,13 @@ SQL
     end
 
     def permitted?(another_id)
-      another_id == current_user[:id] || is_friend?(another_id)
+      another_id == session[:user_id] || is_friend?(another_id)
     end
 
     def mark_footprint(user_id)
-      if user_id != current_user[:id]
+      if user_id != session[:user_id]
         query = 'INSERT INTO footprints (user_id,owner_id) VALUES (?,?)'
-        db.xquery(query, user_id, current_user[:id])
+        db.xquery(query, user_id, session[:user_id])
       end
     end
 
@@ -134,6 +132,7 @@ SQL
 
   error Isucon5::AuthenticationError do
     session[:user_id] = nil
+    session[:account_name] = nil
     halt 401, erubis(:login, layout: false, locals: { message: 'ログインに失敗しました' })
   end
 
@@ -164,10 +163,10 @@ SQL
   get '/' do
     authenticated!
 
-    profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', current_user[:id]).first
+    profile = db.xquery('SELECT * FROM profiles WHERE user_id = ?', session[:user_id]).first
 
     entries_query = 'SELECT * FROM entries WHERE user_id = ? ORDER BY created_at LIMIT 5'
-    entries = db.xquery(entries_query, current_user[:id])
+    entries = db.xquery(entries_query, session[:user_id])
       .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry[:title], entry[:content] = entry[:body].split(/\n/, 2); entry }
 
     comments_for_me_query = <<SQL
@@ -178,7 +177,7 @@ WHERE e.user_id = ?
 ORDER BY c.created_at DESC
 LIMIT 10
 SQL
-    comments_for_me = db.xquery(comments_for_me_query, current_user[:id])
+    comments_for_me = db.xquery(comments_for_me_query, session[:user_id])
 
     entries_of_friends = []
     db.query('SELECT * FROM entries ORDER BY created_at DESC LIMIT 1000').each do |entry|
@@ -200,8 +199,8 @@ SQL
 
     friends_query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
     friends_map = {}
-    db.xquery(friends_query, current_user[:id], current_user[:id]).each do |rel|
-      key = (rel[:one] == current_user[:id] ? :another : :one)
+    db.xquery(friends_query, session[:user_id], session[:user_id]).each do |rel|
+      key = (rel[:one] == session[:user_id] ? :another : :one)
       friends_map[rel[key]] ||= rel[:created_at]
     end
     friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
@@ -214,7 +213,7 @@ GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
 LIMIT 10
 SQL
-    footprints = db.xquery(query, current_user[:id])
+    footprints = db.xquery(query, session[:user_id])
 
     locals = {
       profile: profile || {},
@@ -246,24 +245,24 @@ SQL
 
   post '/profile/:account_name' do
     authenticated!
-    if params['account_name'] != current_user[:account_name]
+    if params['account_name'] != session[:account_name]
       raise Isucon5::PermissionDenied
     end
     args = [params['first_name'], params['last_name'], params['sex'], params['birthday'], params['pref']]
 
-    prof = db.xquery('SELECT * FROM profiles WHERE user_id = ?', current_user[:id]).first
+    prof = db.xquery('SELECT * FROM profiles WHERE user_id = ?', session[:user_id]).first
     if prof
       query = <<SQL
 UPDATE profiles
 SET first_name=?, last_name=?, sex=?, birthday=?, pref=?, updated_at=CURRENT_TIMESTAMP()
 WHERE user_id = ?
 SQL
-      args << current_user[:id]
+      args << session[:user_id]
     else
       query = <<SQL
 INSERT INTO profiles (user_id,first_name,last_name,sex,birthday,pref) VALUES (?,?,?,?,?,?)
 SQL
-      args.unshift(current_user[:id])
+      args.unshift(session[:user_id])
     end
     db.xquery(query, *args)
     redirect "/profile/#{params['account_name']}"
@@ -280,7 +279,7 @@ SQL
     entries = db.xquery(query, owner[:id])
       .map{ |entry| entry[:is_private] = (entry[:private] == 1); entry[:title], entry[:content] = entry[:body].split(/\n/, 2); entry }
     mark_footprint(owner[:id])
-    erb :entries, locals: { owner: owner, entries: entries, myself: (current_user[:id] == owner[:id]) }
+    erb :entries, locals: { owner: owner, entries: entries, myself: (session[:user_id] == owner[:id]) }
   end
 
   get '/diary/entry/:entry_id' do
@@ -302,8 +301,8 @@ SQL
     authenticated!
     query = 'INSERT INTO entries (user_id, private, body) VALUES (?,?,?)'
     body = (params['title'] || "タイトルなし") + "\n" + params['content']
-    db.xquery(query, current_user[:id], (params['private'] ? '1' : '0'), body)
-    redirect "/diary/entries/#{current_user[:account_name]}"
+    db.xquery(query, session[:user_id], (params['private'] ? '1' : '0'), body)
+    redirect "/diary/entries/#{session[:account_name]}"
   end
 
   post '/diary/comment/:entry_id' do
@@ -317,7 +316,7 @@ SQL
       raise Isucon5::PermissionDenied
     end
     query = 'INSERT INTO comments (entry_id, user_id, comment) VALUES (?,?,?)'
-    db.xquery(query, entry[:id], current_user[:id], params['comment'])
+    db.xquery(query, entry[:id], session[:user_id], params['comment'])
     redirect "/diary/entry/#{entry[:id]}"
   end
 
@@ -331,7 +330,7 @@ GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
 LIMIT 50
 SQL
-    footprints = db.xquery(query, current_user[:id])
+    footprints = db.xquery(query, session[:user_id])
     erb :footprints, locals: { footprints: footprints }
   end
 
@@ -339,8 +338,8 @@ SQL
     authenticated!
     query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
     friends = {}
-    db.xquery(query, current_user[:id], current_user[:id]).each do |rel|
-      key = (rel[:one] == current_user[:id] ? :another : :one)
+    db.xquery(query, session[:user_id], session[:user_id]).each do |rel|
+      key = (rel[:one] == session[:user_id] ? :another : :one)
       friends[rel[key]] ||= rel[:created_at]
     end
     list = friends.map{|user_id, created_at| [user_id, created_at]}
@@ -354,7 +353,7 @@ SQL
       unless user
         raise Isucon5::ContentNotFound
       end
-      db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', current_user[:id], user[:id], user[:id], current_user[:id])
+      db.xquery('INSERT INTO relations (one, another) VALUES (?,?), (?,?)', session[:user_id], user[:id], user[:id], session[:user_id])
       redirect '/friends'
     end
   end
