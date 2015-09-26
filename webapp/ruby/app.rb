@@ -227,7 +227,7 @@ SQL
     query = if permitted?(owner[:id])
               'SELECT entries.id,created_at,title,head,private FROM entries JOIN titles ON titles.id = entries.id WHERE user_id = ? ORDER BY entries.id LIMIT 5'
             else
-              'SELECT * FROM entries WHERE user_id = ? AND private=0 ORDER BY id LIMIT 5'
+              'SELECT entries.id,created_at,title,head,private FROM entries JOIN titles ON titles.id = entries.id WHERE user_id = ? AND private=0 ORDER BY id LIMIT 5'
             end
     entries = db.xquery(query, owner[:id]).map{ |entry|
       entry[:is_private] = (entry[:private] == 1);
