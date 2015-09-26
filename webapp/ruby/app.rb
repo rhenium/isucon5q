@@ -277,8 +277,10 @@ SQL
     entries = db.xquery(query, owner[:id]).map{ |entry|
       entry[:is_private] = (entry[:private] == 1)
       entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
-      entry[:cc] = redis.hget("comments", entry[:id]) || 0
+      #entry[:cc] = redis.hget("comments", entry[:id]) || 0
       entry }
+    redis.hmget("comments", entry[:id]).each_with_index {|cc, i|
+      entries[i][:cc] = (cc || 0) }
     mark_footprint(owner[:id])
     erb :entries, locals: { owner: owner,
                             entries: entries,
