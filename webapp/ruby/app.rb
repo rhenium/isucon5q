@@ -174,12 +174,8 @@ SQL
   get '/' do
     authenticated!
 
-    entries_query = 'SELECT * FROM entries WHERE user_id = ? ORDER BY id LIMIT 5'
+    entries_query = 'SELECT entries.id,titles.title FROM entries JOIN titles ON titles.id = entries.id WHERE user_id = ? ORDER BY entries.id LIMIT 5'
     entries = db.xquery(entries_query, cookies[:user_id].to_i)
-      .map{ |entry|
-      entry[:is_private] = (entry[:private] == 1);
-      entry[:title], entry[:content] = entry[:body].split(/\n/, 2)
-      entry }
 
     comments_for_me_query = <<SQL
 SELECT c.id AS id, c.entry_id AS entry_id, c.user_id AS user_id, c.comment AS comment, c.created_at AS created_at, u.account_name AS account_name, u.nick_name AS nick_name
@@ -194,10 +190,9 @@ SQL
 
     fids = get_friends_ids(cookies[:user_id].to_i)
     entries_of_friends = db.xquery(
-      'SELECT entries.*,users.nick_name,users.account_name FROM entries JOIN users ON users.id = user_id WHERE user_id IN (?) ORDER BY id DESC LIMIT 10', fids.join(",")).map do |entry|
-      entry[:title] = entry[:body].split(/\n/, 2).first
-      entry
-    end
+      'SELECT titles.title,entries.id,entries.created_at,users.nick_name,users.account_name FROM entries ' +
+      'JOIN titles ON titles.id = entries.id ' +
+      'JOIN users ON users.id = user_id WHERE user_id IN (?) ORDER BY entries.id DESC LIMIT 10', fids.join(","))
 
     comments_of_friends = []
     db.query('SELECT comments.*,users.* FROM comments JOIN users ON users.id = comments.user_id ORDER BY comments.id DESC LIMIT 100').each do |comment|
@@ -305,9 +300,12 @@ SQL
 
   post '/diary/entry' do
     authenticated!
+    title = params['title'] || "タイトルなし"
+    body = title + "\n" + params['content']
     query = 'INSERT INTO entries (user_id, private, body) VALUES (?,?,?)'
-    body = (params['title'] || "タイトルなし") + "\n" + params['content']
     db.xquery(query, cookies[:user_id].to_i, (params['private'] ? '1' : '0'), body)
+    query = 'INSERT INTO titles (id, title, head) VALUES (?,?,?)'
+    db.xquery(query, db.last_id, title, title)
     redirect "/diary/entries/#{cookies[:account_name]}"
   end
 
@@ -367,6 +365,7 @@ SQL
     db.query("DELETE FROM relations WHERE id > 500000")
     db.query("DELETE FROM footprints WHERE id > 500000")
     db.query("DELETE FROM entries WHERE id > 500000")
+    db.query("DELETE FROM titles WHERE id > 500000")
     db.query("DELETE FROM comments WHERE id > 1500000")
     redis.flushdb
     ## users
