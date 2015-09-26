@@ -120,7 +120,7 @@ SQL
       qstr = "select another,created_at from relations where one = #{id} and another in (#{friend_ids.join(",")})"
       friends = db.query(qstr).map {|row| [row[:another], row[:created_at]] }
     end
-    
+
     def get_friends_ids(id)
       redis.smembers("r#{id}")
     end
@@ -202,6 +202,7 @@ SQL
     entries_of_friends = db.xquery(
       'SELECT * FROM entries WHERE user_id IN (?) ORDER BY created_at DESC LIMIT 10', fids.join(",")).map do |entry|
       entry[:title] = entry[:body].split(/\n/).first
+      entry
     end
 
     comments_of_friends = db.xquery(
@@ -209,6 +210,7 @@ SQL
       entry = db.xquery('SELECT * FROM entries WHERE id = ?', comment[:entry_id]).first
       entry[:is_private] = (entry[:private] == 1)
       #next if entry[:is_private] && !permitted?(entry[:user_id])
+      entry
     end
 
     friends = get_friends_map(session[:user_id])
